@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게임 센터 로그인</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+        body { font-family: 'Jua', sans-serif; margin: 0; background-color: #F7FFF7; color: #4A4A4A; text-align: center; padding: 2rem; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .login-container { background: white; padding: 3rem; border-radius: 20px; box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1); border: 1px solid #eee; }
+        h1 { margin-top: 0; font-size: 2.5rem; }
+        input { font-family: 'Jua', sans-serif; font-size: 1.5rem; padding: 0.8rem; border-radius: 10px; border: 2px solid #ddd; margin-bottom: 1.5rem; text-align: center; }
+        button { font-family: 'Jua', sans-serif; background-color: #FF6B6B; color: white; border: none; border-bottom: 5px solid #c44d4d; border-radius: 12px; padding: 1rem 2rem; font-size: 1.5rem; cursor: pointer; transition: all 0.1s ease-in-out; }
+        button:hover { transform: translateY(-2px); border-bottom-width: 7px; }
+        button:active { transform: translateY(1px); border-bottom-width: 4px; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>게임 센터 입장 🎮</h1>
+        <form id="login-form">
+            <input type="password" id="password" placeholder="비밀번호 입력" required>
+            <br>
+            <button type="submit">게임 시작하기</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const password = document.getElementById('password').value;
+            window.location.href = `/game?password=${password}`;
+        });
+    </script>
+</body>
+</html>
