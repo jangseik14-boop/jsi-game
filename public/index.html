@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>교회 레크리에이션 게임 센터</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+        :root { --primary-color: #FF6B6B; --secondary-color: #4ECDC4; --bg-color: #F7FFF7; --dark-color: #4A4A4A; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Jua', sans-serif; margin: 0; background-color: var(--bg-color); text-align: center; }
+        .screen { display: none; min-height: 100vh; width: 100%; padding: 3rem; flex-direction: column; justify-content: center; align-items: center; }
+        .screen.active { display: flex; }
+        .title { font-size: clamp(3rem, 10vw, 5rem); font-weight: 900; color: var(--dark-color); margin-bottom: 3rem; text-shadow: 3px 3px 0px #FFE66D; word-break: keep-all; }
+        .btn-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; width: 100%; max-width: 1000px; }
+        .btn { background-color: var(--primary-color); color: white; border: none; border-bottom: 8px solid #c44d4d; border-radius: 20px; padding: 1.5rem; font-weight: 700; cursor: pointer; transition: all 0.1s ease-in-out; text-shadow: 2px 2px 0px rgba(0,0,0,0.2); display: flex; flex-direction: column; align-items: center; justify-content: center; height: 150px; line-height: 1.2; }
+        .btn:hover { transform: translateY(-4px); border-bottom-width: 12px; }
+        .btn:active { transform: translateY(2px); border-bottom-width: 6px; }
+        .btn-text { font-size: 2.5rem; }
+        .btn-emoji { font-size: 3rem; margin-top: 0.5rem; }
+        .btn-small-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); } /* 반응형 그리드 */
+        .btn.disabled { background-color: #ccc; border-color: #ccc; color: #666; cursor: not-allowed; }
+        
+        /* 게임 화면 전용 */
+        #game-screen { background: linear-gradient(135deg, #4ECDC4 0%, #5961C5 100%); }
+        .game-container { background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border-radius: 30px; padding: 2.5rem; width: 90%; max-width: 1000px; box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37); position: relative; }
+        .score-board { display: flex; justify-content: space-around; margin-bottom: 2rem; color: white; font-size: 2.5rem; font-weight: 700; }
+        #timer { position: absolute; top: -70px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.3); color: white; padding: 1rem 2rem; border-radius: 30px; font-size: 2rem; font-weight: 700; }
+        .question-card { background: white; color: var(--secondary-color); border-radius: 25px; min-height: 350px; display: flex; justify-content: center; align-items: center; font-size: 6.5rem; font-weight: 900; padding: 2rem; margin-bottom: 2rem; word-break: keep-all; }
+        #question-number { position: absolute; top: 20px; left: 30px; font-size: 2.5rem; font-weight: 700; color: rgba(0,0,0,0.2); }
+        /* 초성퀴즈용 스타일 */
+        .initials-card { font-size: 8rem; letter-spacing: 0.5rem; }
+        .answer-reveal, .hint-reveal { display: none; font-size: 3.5rem; font-weight: 700; margin-top: -1rem; margin-bottom: 2rem; }
+        .answer-reveal { color: #e74c3c; }
+        .hint-reveal { color: #3498db; }
+        .game-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem; }
+        .game-controls .btn { padding: 2rem; font-size: 2rem; }
+        .btn-correct, .btn-hint { background-color: #2ecc71; border-bottom-color: #25a25a; }
+        .btn-pass { background-color: #f1c40f; border-bottom-color: #c19d0c; }
+        .btn-back { margin-top: 2rem; background: transparent; border: none; font-size: 1.5rem; cursor: pointer; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        #game-screen .btn-back { color: rgba(255,255,255,0.8); }
+
+        /* 주제 선택 화면 전용 */
+        .time-setting { margin-bottom: 3rem; color: var(--dark-color); font-size: 2rem; font-weight: 700; }
+        .time-setting input { width: 120px; font-size: 2.5rem; text-align: center; border: 4px solid #ddd; border-radius: 12px; padding: 0.5rem; margin: 0 0.5rem; font-family: 'Jua', sans-serif; }
+        #charades-topic-menu .btn-back, #initials-topic-menu .btn-back, #naran-menu .btn-back, #unanimity-menu .btn-back { color: var(--dark-color); }
+        #charades-topic-menu .btn-back:hover, #initials-topic-menu .btn-back:hover, #naran-menu .btn-back:hover, #unanimity-menu .btn-back:hover, #game-config-screen .btn-back:hover { color: var(--primary-color); }
+
+        /* 결과 화면 */
+        #result-screen h2 { font-size: 3rem; color: var(--dark-color); }
+        #result-screen p { font-size: 2.5rem; }
+        #result-screen .btn {
+            margin-top: 2rem;
+            font-size: 2.5rem; /* 글자 크기 키움 */
+            height: auto;      /* 고정 높이 제거 */
+            padding: 2rem;     /* 내부 여백 조정 */
+        }
+
+        /* 로고 스타일 */
+        .logo {
+            max-width: 250px; /* 로고의 최대 너비를 250px로 설정 (크기 조절) */
+            height: auto; /* 높이는 자동으로 조절 */
+            margin-bottom: 2rem; /* 아래 제목과의 간격 */
+        }
+
+        /* 주제 선택 화면의 기록 보드 */
+        .topic-record-board { margin-top: 2rem; width: 100%; background: #fffbeb; padding: 1.5rem; border-radius: 15px; border: 3px solid #fde68a; }
+        .topic-record-board h2 { font-size: 2rem; margin-top: 0; margin-bottom: 1rem; color: var(--dark-color); }
+        .topic-record-list { list-style: none; padding: 0; margin: 0; max-height: 25vh; overflow-y: auto; font-size: 1.5rem; color: #333; }
+        .topic-record-list li { padding: 0.5rem; border-bottom: 1px solid rgba(0,0,0,0.1); display: flex; justify-content: space-between; }
+        .topic-record-list li:last-child { border-bottom: none; }
+
+    </style>
+</head>
+<body>
+    <!-- 1. 게임 선택 화면 -->
+    <div id="main-menu" class="screen">
+        <div>
+            <img src="logo.png" alt="교회 로고" class="logo">
+            <h1 class="title">🎮 게임을 선택하세요</h1>
+            <div class="btn-grid">
+                <button class="btn" onclick="selectGame('charades')"><span class="btn-text">몸으로 말해요</span></button>
+                <button class="btn" onclick="selectGame('initials')"><span class="btn-text">초성 퀴즈</span></button>
+                <button class="btn" onclick="selectGame('naran')"><span class="btn-text">순우리말퀴즈</span></button>
+                <button class="btn" onclick="selectGame('unanimity')"><span class="btn-text">일심동체 게임</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 몸으로 말해요 - 주제 선택 화면 -->
+    <div id="charades-topic-menu" class="screen">
+        <div style="width: 100%; max-width: 1000px;">
+            <h1 class="title">🤔 주제를 선택하세요</h1>
+            <div class="btn-grid btn-small-grid">
+                <button class="btn" onclick="showGameConfig('charades', '동물')"><span class="btn-text">동물</span><span class="btn-emoji">🐼</span></button>
+                <button class="btn" onclick="showGameConfig('charades', '사물')"><span class="btn-text">사물</span><span class="btn-emoji">💻</span></button>
+                <button class="btn" onclick="showGameConfig('charades', '스포츠')"><span class="btn-text">스포츠</span><span class="btn-emoji">⚽️</span></button>
+                <button class="btn" onclick="showGameConfig('charades', '속담')"><span class="btn-text">속담</span><span class="btn-emoji">🗣️</span></button>
+                <button class="btn" onclick="showGameConfig('charades', '직업')"><span class="btn-text">직업</span><span class="btn-emoji">👨‍⚕️</span></button>
+                <button class="btn" onclick="showGameConfig('charades', '음식')"><span class="btn-text">음식</span><span class="btn-emoji">🍕</span></button>
+                <button class="btn" onclick="showGameConfig('charades', '영화')"><span class="btn-text">영화</span><span class="btn-emoji">🎬</span></button>
+                <button class="btn" onclick="showGameConfig('charades', 'K-POP')"><span class="btn-text">K-POP</span><span class="btn-emoji">🎤</span></button>
+            </div>
+            <div class="topic-record-board">
+                <h2>🏆 오늘의 기록</h2>
+                <ul id="charades-record-list" class="topic-record-list"></ul>
+                <button class="btn-back" style="font-size: 1.2rem;" onclick="clearRecords('charades')">기록 초기화</button>
+            </div>
+            <button class="btn-back" onclick="showScreen('main-menu')">게임 선택으로 돌아가기</button>
+        </div>
+    </div>
+
+    <!-- 2-1. 초성 퀴즈 - 주제 선택 화면 -->
+    <div id="initials-topic-menu" class="screen">
+        <div style="width: 100%; max-width: 1000px;">
+            <h1 class="title">🤔 주제를 선택하세요</h1>
+            <div class="btn-grid btn-small-grid">
+                <button class="btn" onclick="showGameConfig('initials', '성경인물')"><span class="btn-text">성경인물</span><span class="btn-emoji">🙏</span></button>
+                <button class="btn" onclick="showGameConfig('initials', '과자')"><span class="btn-text">과자</span><span class="btn-emoji">🍪</span></button>
+                <button class="btn" onclick="showGameConfig('initials', '동물')"><span class="btn-text">동물</span><span class="btn-emoji">🐼</span></button>
+                <button class="btn" onclick="showGameConfig('initials', '스포츠')"><span class="btn-text">스포츠</span><span class="btn-emoji">⚽️</span></button>
+                <button class="btn" onclick="showGameConfig('initials', '영화')"><span class="btn-text">영화</span><span class="btn-emoji">🎬</span></button>
+                <button class="btn" onclick="showGameConfig('initials', '나라')"><span class="btn-text">나라</span><span class="btn-emoji">🌍</span></button>
+                <button class="btn" onclick="showGameConfig('initials', '과일')"><span class="btn-text">과일</span><span class="btn-emoji">🍓</span></button>
+                <button class="btn" onclick="showGameConfig('initials', '직업')"><span class="btn-text">직업</span><span class="btn-emoji">👨‍⚕️</span></button>
+                <button class="btn" onclick="showGameConfig('initials', '웹툰')"><span class="btn-text">웹툰</span><span class="btn-emoji">💬</span></button>
+                <button class="btn" onclick="showGameConfig('initials', '애니')"><span class="btn-text">애니</span><span class="btn-emoji">📺</span></button>
+            </div>
+            <div class="topic-record-board">
+                <h2>🏆 오늘의 기록</h2>
+                <ul id="initials-record-list" class="topic-record-list"></ul>
+                <button class="btn-back" style="font-size: 1.2rem;" onclick="clearRecords('initials')">기록 초기화</button>
+            </div>
+            <button class="btn-back" onclick="showScreen('main-menu')">게임 선택으로 돌아가기</button>
+        </div>
+    </div>
+
+    <!-- 2-X. 게임 설정 화면 (공용) -->
+    <div id="game-config-screen" class="screen">
+        <div style="width: 100%; max-width: 1000px;">
+            <h1 id="config-title" class="title">🤔 시간을 설정하세요</h1>
+            <div class="time-setting">
+                <input type="number" id="config-time-minutes" min="0" max="59" value="1"> 분
+                <input type="number" id="config-time-seconds" min="0" max="59" value="0"> 초
+            </div>
+            <div class="btn-grid" style="grid-template-columns: 1fr;">
+                <button class="btn" onclick="startConfiguredGame()"><span class="btn-text">게임 시작!</span><span class="btn-emoji">🚀</span></button>
+            </div>
+            <button id="config-back-btn" class="btn-back" onclick="showScreen('main-menu')">주제 선택으로 돌아가기</button>
+        </div>
+    </div>
+
+    <!-- 2-3. 나랏말싸미 - 설정 화면 -->
+    <div id="naran-menu" class="screen">
+        <div style="width: 100%; max-width: 1000px;">
+            <h1 class="title">🤔 시간을 설정하세요</h1>
+            <div class="time-setting">
+                <input type="number" id="naran-time-minutes" min="0" max="59" value="1"> 분
+                <input type="number" id="naran-time-seconds" min="0" max="59" value="0"> 초
+            </div>
+            <div class="btn-grid" style="grid-template-columns: 1fr;">
+                <button class="btn" onclick="startGame('naran', '순우리말')"><span class="btn-text">게임 시작!</span><span class="btn-emoji">🚀</span></button>
+            </div>
+            <div class="topic-record-board">
+                <h2>🏆 오늘의 기록</h2>
+                <ul id="naran-record-list" class="topic-record-list"></ul>
+                <button class="btn-back" style="font-size: 1.2rem;" onclick="clearRecords('naran')">기록 초기화</button>
+            </div>
+            <button class="btn-back" onclick="showScreen('main-menu')">게임 선택으로 돌아가기</button>
+        </div>
+    </div>
+
+    <!-- 2-5. 일심동체 게임 - 설정 화면 -->
+    <div id="unanimity-menu" class="screen">
+        <div style="width: 100%; max-width: 1000px;">
+            <h1 class="title">🤔 시간을 설정하세요</h1>
+            <div class="time-setting">
+                <input type="number" id="unanimity-time-minutes" min="0" max="59" value="1"> 분
+                <input type="number" id="unanimity-time-seconds" min="0" max="59" value="0"> 초
+            </div>
+            <div class="btn-grid" style="grid-template-columns: 1fr;">
+                <button class="btn" onclick="startGame('unanimity', '일심동체')"><span class="btn-text">게임 시작!</span><span class="btn-emoji">🚀</span></button>
+            </div>
+            <div class="topic-record-board">
+                <h2>🏆 오늘의 기록</h2>
+                <ul id="unanimity-record-list" class="topic-record-list"></ul>
+                <button class="btn-back" style="font-size: 1.2rem;" onclick="clearRecords('unanimity')">기록 초기화</button>
+            </div>
+            <button class="btn-back" onclick="showScreen('main-menu')">게임 선택으로 돌아가기</button>
+        </div>
+    </div>
+
+    <!-- 3. 게임 진행 화면 -->
+    <div id="game-screen" class="screen">
+        <div class="game-container">
+            <div id="timer">01:00</div>
+            <div class="score-board">
+                <div id="correct-count">정답: 0</div>
+                <div id="pass-count">패스: 0</div>
+            </div>
+            <div id="question-number"></div>
+            <div id="question-card" class="question-card">문제</div>
+            <div id="hint-reveal" class="hint-reveal">힌트</div>
+            <div id="answer-reveal" class="answer-reveal">정답</div>
+            <div class="game-controls">
+                <button id="pass-btn" class="btn btn-pass" onclick="handlePass()">➡️ 패스</button>
+                <button id="correct-btn" class="btn btn-correct" onclick="handleCorrect()">✅ 정답 확인</button>
+            </div>
+            <div id="hint-controls" class="game-controls" style="display: none; margin-top: 1rem;">
+                <button class="btn btn-hint" onclick="showHint(1)">💡 힌트 1</button>
+                <button class="btn btn-hint" onclick="showHint(2)">💡 힌트 2</button>
+            </div>
+        </div>
+        <button class="btn-back" onclick="showScreen('main-menu')">주제 선택으로 돌아가기</button>
+    </div>
+
+    <!-- 4. 결과 화면 -->
+    <div id="result-screen" class="screen">
+        <div>
+            <h1 class="title">✨ 게임 결과</h1>
+            <h2 id="result-topic"></h2>
+            <p id="result-score"></p>
+            <div class="btn-grid" style="max-width: 600px;">
+                <button class="btn" onclick="showScreen('main-menu')">처음으로</button>
+                <button class="btn btn-correct" onclick="saveRecord()">기록 남기기</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // --- 문제 데이터 ---
+        const charadesQuestions = {
+            '동물': [
+                '코끼리', '기린', '원숭이', '고릴라', '토끼', '캥거루', '돼지', '소', '말', '강아지',
+                '고양이', '사자', '호랑이', '곰', '쥐', '다람쥐', '판다', '코알라', '나무늘보', '펭귄',
+                '오리', '닭', '개구리', '뱀', '거북이', '두더지', '스컹크', '낙타', '사슴', '여우',
+                '늑대', '멧돼지', '미어캣', '고슴도치', '너구리', '알파카', '하이에나', '코뿔소', '하마', '양',
+                '비버', '개미핥기', '날다람쥐', '햄스터', '두꺼비', '악어', '카멜레온', '코브라', '이구아나', '도마뱀',
+                '타조', '독수리', '부엉이', '딱따구리', '홍학', '공작새', '펠리컨', '백조', '앵무새', '칠면조',
+                '참새', '나비', '모기', '파리', '벌', '거미', '사마귀', '메뚜기', '개미', '달팽이',
+                '지렁이', '쇠똥구리', '매미', '반딧불이', '사슴벌레', '상어', '고래', '돌고래', '물개', '바다사자',
+                '수달', '해달', '복어', '가오리', '해마', '문어', '오징어', '꽃게', '새우', '바다거북',
+                '아귀', '조개', '미꾸라지', '날치', '바다코끼리', '소라게', '말미잘', '불가사리', '연어', '침팬지'
+            ],
+            '사물': [
+                '스마트폰', '청소기', '헤어드라이어', '선풍기', '세탁기', '카메라', '다리미', '전자레인지', '안마의자', '리모컨',
+                '칫솔', '거울', '샤워기', '면도기', '두루마리 휴지', '향수', '수건', '손톱깎이', '체중계', '우산',
+                '젓가락', '프라이팬', '주전자', '믹서기', '식칼과 도마', '가위', '병따개', '고무장갑', '국자', '빨대',
+                '지우개', '스테이플러(호치키스)', '자', '테이프', '돋보기', '계산기', '컴퓨터 마우스', '책', '연필', '칠판과 분필',
+                '안경', '모자', '넥타이', '하이힐', '장갑', '양말', '목도리', '손목시계', '반지', '백팩(가방)',
+                '농구공', '축구공', '야구배트', '줄넘기', '훌라후프', '아령(덤벨)', '볼링공', '골프채', '낚싯대', '수경(수영안경)',
+                '피아노', '바이올린', '기타', '드럼', '리코더(피리)', '트럼펫', '심벌즈', '하프', '캐스터네츠', '탬버린',
+                '자전거', '오토바이', '자동차(핸들)', '비행기', '헬리콥터', '기차', '배(노)', '킥보드', '스케이트보드', '휠체어',
+                '망치', '톱', '삽', '소화기', '주사기', '청진기', '수갑', '활과 화살', '총', '방패',
+                '마이크', '파리채', '효자손', '요요', '페달 휴지통', '립스틱', '부채', '쌍안경', '캐리어(여행가방)', '물총'
+            ],
+            '스포츠': [
+                "축구", "농구", "야구", "배구", "피구", "족구", "럭비", "핸드볼", "발야구", "볼링",
+                "테니스", "배드민턴", "탁구", "골프", "당구", "스쿼시", "아이스하키", "필드하키", "게이트볼", "크리켓",
+                "태권도", "복싱", "유도", "레슬링", "씨름", "펜싱", "검도", "스모", "무에타이", "주짓수",
+                "100m 달리기", "마라톤", "이어달리기", "허들", "멀리뛰기", "높이뛰기", "장대높이뛰기", "포환던지기", "창던지기", "경보",
+                "기계체조", "리듬체조", "뜀틀", "철봉", "평행봉", "평균대", "트램펄린", "역도", "윗몸일으키기", "팔굽혀펴기",
+                "수영", "접영", "배영", "평영", "다이빙", "싱크로나이즈드", "서핑", "수상스키", "조정", "스쿠버다이빙",
+                "피겨 스케이팅", "스피드 스케이팅", "쇼트트랙", "스키", "스노보드", "스키점프", "봅슬레이", "스켈레톤", "루지", "컬링",
+                "양궁", "사격", "다트", "투호", "승마", "암벽등반", "사이클", "패러글라이딩", "스카이다이빙", "번지점프",
+                "요가", "필라테스", "에어로빅", "보디빌딩", "스케이트보드", "롤러스케이트", "줄넘기", "훌라후프", "팔씨름", "카레이싱",
+                "줄다리기", "닭싸움", "2인 3각", "박 터트리기", "기마전", "림보", "수건돌리기", "꼬리잡기", "제기차기", "단체줄넘기"
+            ],
+            '속담': [
+                '개구리 올챙이 적 생각 못 한다', '고래 싸움에 새우 등 터진다', '소 잃고 외양간 고친다', '원숭이도 나무에서 떨어진다', '서당 개 삼 년이면 풍월을 읊는다', '하룻강아지 범 무서운 줄 모른다', '닭 쫓던 개 지붕 쳐다본다', '호랑이에게 물려 가도 정신만 차리면 산다', '까마귀 날자 배 떨어진다', '고양이 목에 방울 달기', '쥐구멍에도 볕 뜰 날 있다', '지렁이도 밟으면 꿈틀한다', '꿩 대신 닭', '우물 안 개구리', '얌전한 고양이가 부뚜막에 먼저 올라간다', '낮말은 새가 듣고 밤말은 쥐가 듣는다', '미꾸라지 한 마리가 온 웅덩이를 흐린다', '뱁새가 황새 따라가면 가랑이가 찢어진다', '가재는 게 편이다', '똥 묻은 개가 겨 묻은 개 나무란다', '호랑이도 제 말 하면 온다', '모기 보고 칼 뺀다', '자라 보고 놀란 가슴 솥뚜껑 보고 놀란다', '독 안에 든 쥐', '벼룩의 간을 내어 먹는다',
+                '누워서 떡 먹기', '그림의 떡', '식은 죽 먹기', '떡 줄 사람은 생각도 않는데 김칫국부터 마신다', '남의 떡이 더 커 보인다', '미운 놈 떡 하나 더 준다', '수박 겉 핥기', '울며 겨자 먹기', '달면 삼키고 쓰면 뱉는다', '입에 쓴 약이 병에는 좋다', '첫술에 배부르랴', '뚝배기보다 장맛이다', '다 된 죽에 코 빠뜨린다', '우물에 가서 숭늉 찾는다', '찬물도 위아래가 있다', '꿀 먹은 벙어리', '보기 좋은 떡이 먹기도 좋다', '콩 심은 데 콩 나고 팥 심은 데 팥 난다', '작은 고추가 더 맵다', '빛 좋은 개살구', '우는 아이 젖 준다', '소문난 잔치에 먹을 것 없다', '먹을 때는 개도 안 건드린다', '감나무 밑에 누워서 홍시 떨어지기를 바란다', '가뭄에 콩 나듯',
+                '발 없는 말이 천 리 간다', '도둑이 제 발 저린다', '배보다 배꼽이 더 크다', '방귀 뀐 놈이 성낸다', '귀에 걸면 귀걸이 코에 걸면 코걸이', '눈 가리고 아웅', '세 살 버릇 여든까지 간다', '천 리 길도 한 걸음부터', '돌다리도 두들겨 보고 건너라', '뛰는 놈 위에 나는 놈 있다', '백지장도 맞들면 낫다', '벼는 익을수록 고개를 숙인다', '믿는 도끼에 발등 찍힌다', '땅 짚고 헤엄치기', '아 다르고 어 다르다', '언 발에 오줌 누기', '열 번 찍어 안 넘어가는 나무 없다', '꼬리가 길면 밟힌다', '종로에서 뺨 맞고 한강에서 눈 흘긴다', '가는 말이 고와야 오는 말이 곱다', '길고 짧은 것은 대어 보아야 안다', '하나를 보면 열을 안다', '사촌이 땅을 사면 배가 아프다', '입술이 없으면 이가 시리다', '엎어지면 코 닿을 데',
+                '티끌 모아 태산', '등잔 밑이 어둡다', '산 넘어 산', '빈 수레가 요란하다', '바늘 도둑이 소도둑 된다', '구슬이 서 말이라도 꿰어야 보배다', '마른하늘에 날벼락', '윗물이 맑아야 아랫물이 맑다', '호미로 막을 것을 가래로 막는다', '불난 집에 부채질한다', '낫 놓고 기역 자도 모른다', '계란으로 바위 치기', '하늘이 무너져도 솟아날 구멍이 있다', '아니 땐 굴뚝에 연기 날까', '모로 가도 서울만 가면 된다', '엎질러진 물', '밑 빠진 독에 물 붓기', '가는 날이 장날이다', '사공이 많으면 배가 산으로 간다', '하늘의 별 따기', '칼로 물 베기', '가랑비에 옷 젖는 줄 모른다', '우물을 파도 한 우물을 파라', '바늘 가는 데 실 간다', '핑계 없는 무덤 없다'
+            ],
+            '직업': [
+                '지휘자', '마술사', '화가', '사진작가', '영화감독', '발레리나', '피아니스트', '드러머', '기타리스트', '바이올리니스트',
+                '성악가', '모델', '디제이', '마임 연기자', '삐에로', '조각가', '치어리더', '기상캐스터', '유튜버', '리포터',
+                '요리사', '바리스타', '제빵사', '바텐더', '소믈리에', '초밥 장인', '정육점 사장님', '배달원', '승무원', '때밀이',
+                '미용사', '이발사', '메이크업 아티스트', '네일 아티스트', '구두닦이', '안마사', '주차 요원', '카지노 딜러', '쇼호스트', '엿장수',
+                '의사', '치과의사', '간호사', '한의사', '수의사', '소방관', '교통경찰', '경찰관', '구급대원', '군인',
+                '저격수', '판사', '경호원', '탐정', '환경미화원', '우체부', '방역 요원', '인명구조요원', '사서', '경매사',
+                '목수', '광부', '페인트공', '용접공', '대장장이', '농부', '어부', '해녀', '벌목꾼', '재단사',
+                '자동차 정비사', '도예가', '타투이스트', '유리창 청소부', '굴착기 기사', '버스 기사', '기차 기관사', '비행기 조종사', '우주비행사', '심마니',
+                '야구선수', '축구선수', '농구선수', '권투선수', '역도선수', '양궁선수', '수영선수', '피겨스케이팅 선수', '스키선수', '씨름선수',
+                '골프선수', '볼링선수', '당구선수', '펜싱선수', '유도선수', '리듬체조 선수', '보디빌더', '투우사', '스포츠 심판', '승마선수'
+            ],
+            '음식': [
+                "짜장면", "짬뽕", "냉면", "컵라면", "스파게티", "우동", "쫄면", "불닭볶음면", "칼국수", "비빔면",
+                "햄버거", "피자", "감자튀김", "핫도그", "샌드위치", "치킨", "스테이크", "타코", "팝콘", "돈까스",
+                "떡볶이", "붕어빵", "호떡", "어묵(오뎅)", "솜사탕", "군고구마", "회오리감자", "달고나", "타코야끼", "탕후루",
+                "수박", "바나나", "포도", "사과", "귤", "레몬", "딸기", "파인애플", "두리안", "복숭아",
+                "산낙지", "마른오징어", "조개구이", "새우", "랍스터", "생선회", "초밥", "굴", "꽃게", "생선구이",
+                "삼겹살", "상추쌈", "비빔밥", "김밥", "누룽지", "삼계탕", "청국장", "족발", "닭발", "갈비",
+                "아이스크림 콘", "쭈쭈바", "팥빙수", "풍선껌", "초콜릿", "도넛", "케이크", "마카롱", "젤리", "마시멜로",
+                "소주", "맥주", "샴페인", "콜라", "믹스커피", "버블티", "우유", "요구르트", "와인", "뜨거운 커피",
+                "옥수수", "가래떡", "치즈스틱", "퐁듀", "시리얼", "삶은 계란", "호두", "참치 통조림", "나초", "월남쌈",
+                "까나리액젓", "매운 고추", "홍어", "신 사탕(아이셔)", "한약", "양파", "소금", "날계란", "마늘", "마라탕"
+            ],
+            '영화': [
+                '스파이더맨', '아이언맨', '슈퍼맨', '배트맨', '캡틴 아메리카', '헐크', '토르', '원더우먼', '엑스맨', '아쿠아맨',
+                '아바타', '매트릭스', '터미네이터', '에이리언', '킹콩', '쥬라기 공원', '고질라', 'E.T.', '스타워즈', '트랜스포머',
+                '미션 임파서블', '킹스맨', '007 시리즈', '인디아나 존스', '매드맥스', '겨울왕국', '토이 스토리', '라이온 킹', '알라딘', '미녀와 야수',
+                '인어공주', '슈렉', '쿵푸팬더', '인사이드 아웃', '미니언즈', '주토피아', '센과 치히로의 행방불명', '이웃집 토토로', '코코', '업(Up)',
+                '모아나', '장화신은 고양이', '니모를 찾아서', '짱구는 못말려', '도라에몽', '피터팬', '뮬란', '슬램덩크', '스머프', '마다가스카',
+                '올드보이', '기생충', '범죄도시', '괴물', '아저씨', '엑시트', '타짜', '명량', '관상', '베테랑',
+                '극한직업', '해운대', '신과함께', '암살', '써니', '곡성', '부산행', '파묘', '친구', '살인의 추억',
+                '늑대소년', '국가대표', '웰컴 투 동막골', '말아톤', '친절한 금자씨', '타이타닉', '라라랜드', '나 홀로 집에', '보헤미안 랩소디', '록키',
+                '쇼생크 탈출', '포레스트 검프', '레옹', '가위손', '마스크', '해리 포터', '반지의 제왕', '찰리와 초콜릿 공장', '캐리비안의 해적', '조커',
+                '링', '쏘우', '엑소시스트', '주온', '죠스', '스크림', '고스트버스터즈', '사랑과 영혼', '캐스트 어웨이', '글래디에이터'
+            ],
+            '나라': ['대한민국', '일본', '중국', '미국', '캐나다', '멕시코', '브라질', '아르헨티나', '칠레', '영국', '프랑스', '독일', '이탈리아', '스페인', '러시아', '인도', '호주', '이집트', '남아프리카공화국', '나이지리아', '케냐', '사우디아라비아', '이란', '이라크', '터키', '그리스', '스웨덴', '노르웨이', '핀란드', '덴마크', '네덜란드', '벨기에', '스위스', '오스트리아', '폴란드', '우크라이나', '베트남', '태국', '필리핀', '말레이시아', '인도네시아', '싱가포르', '뉴질랜드', '대만', '홍콩', '몽골', '카자흐스탄', '우즈베키스탄', '파키스탄', '방글라데시', '네팔', '스리랑카', '아랍에미리트', '카타르', '이스라엘', '팔레스타인', '레바논', '요르단', '시리아', '아일랜드', '포르투갈', '헝가리', '체코', '루마니아', '불가리아', '세르비아', '크로아티아', '슬로베니아', '알바니아', '조지아', '아르메니아', '아제르바이잔', '리투아니아', '라트비아', '에스토니아', '벨라루스', '몰도바', '아이슬란드', '룩셈부르크', '모나코', '안도라', '산마리노', '리히텐슈타인', '바티칸', '몰타', '키프로스', '콜롬비아', '페루', '베네수엘라', '에콰도르', '볼리비아', '파라과이', '우루과이', '쿠바', '자메이카', '코스타리카', '파나마', '과테말라', '엘살바도르', '니카라과', '온두라스'],
+            'K-POP': [
+                '뉴진스 - Hype Boy', '뉴진스 - OMG', '뉴진스 - Super Shy', '뉴진스 - Ditto', '아일릿 - Magnetic', '아이브 - LOVE DIVE', '아이브 - I AM', '아이브 - 해야 (HEYA)', '에스파 - Supernova', '에스파 - Next Level', '에스파 - Drama', '에스파 - Armageddon', '르세라핌 - ANTIFRAGILE', '르세라핌 - Smart', '르세라핌 - 이브, 프시케 그리고 푸른 수염의 아내', '(여자)아이들 - 퀸카', '(여자)아이들 - TOMBOY', '(여자)아이들 - 클락션', '(여자)아이들 - 나는 아픈 건 딱 질색이니까', '스테이씨 - ASAP', '스테이씨 - Teddy Bear', '있지(ITZY) - WANNABE', '피프티 피프티 - Cupid', '키스오브라이프 - Sticky', '베이비몬스터 - SHEESH',
+                '투어스(TWS) - 첫 만남은 계획대로 되지 않아', '라이즈 - Get A Guitar', '라이즈 - Siren', '세븐틴 - 손오공', '세븐틴 - 아주 NICE', '부석순 - 파이팅 해야지', '스트레이 키즈 - 특', '투모로우바이투게더 - Sugar Rush Ride', '엔하이픈 - Bite Me', 'NCT 127 - 영웅', 'NCT DREAM - Candy', '지코 - 아무노래', '지코 - 새삥', '지코(feat. 제니) - SPOT!', '정국 - Seven', '태민 - Guilty', '태민 - MOVE', '카이 - Rover', '지수 - 꽃', '제니 - SOLO', '나연 - POP!', '전소미 - Fast Forward', '전소미 - DUMB DUMB', '화사 - 마리아', '제시 - ZOOM',
+                '방탄소년단 - Dynamite', '방탄소년단 - Butter', '방탄소년단 - 불타오르네', '방탄소년단 - 피 땀 눈물', '블랙핑크 - 뚜두뚜두', '블랙핑크 - How You Like That', '블랙핑크 - Pink Venom', '블랙핑크 - Shut Down', '트와이스 - TT', '트와이스 - CHEER UP', '트와이스 - What is Love?', '트와이스 - FANCY', '엑소(EXO) - 으르렁', '엑소(EXO) - Love Shot', '레드벨벳 - 빨간 맛', '레드벨벳 - Psycho', '레드벨벳 - Feel My Rhythm', '마마무 - HIP', '오마이걸 - 살짝 설렜어', '청하 - 벌써 12시', '모모랜드 - 뿜뿜', '브레이브걸스 - 롤린', '오마이걸 - 돌핀', '아이오아이 - PICK ME (픽미)', '워너원 - 나야 나',
+                '싸이 - 강남스타일', '싸이 - That That', '원더걸스 - Tell Me', '원더걸스 - Nobody', '소녀시대 - Gee', '소녀시대 - 소원을 말해봐', '슈퍼주니어 - 쏘리 쏘리', '샤이니 - 링딩동', '카라 - 미스터', '티아라 - 롤리폴리', '빅뱅 - 뱅뱅뱅', '빅뱅 - Fantastic Baby', '2PM - 우리집', '2PM - Heartbeat', '비 - 깡', '동방신기 - 주문(MIROTIC)', '브라운아이드걸스 - 아브라카다브라', 'EXID - 위아래', '씨스타 - Touch My Body', '선미 - 가시나', '박진영 - 어머님이 누구니', '인피니트 - 내꺼하자', '2NE1 - 내가 제일 잘 나가', '에이핑크 - Mr. Chu', '블락비 - Her'
+            ]
+        };
+
+        const initialsQuestions = {
+            '성경인물': [
+                "아담", "하와", "가인", "에녹", "므두셀라", "노아", "아브라함", "사라", "이스마엘", "하갈", 
+                "리브가", "에서", "야곱", "레아", "라헬", "르우벤", "레위", "요셉", "베냐민", "므낫세", 
+                "에브라임", "모세", "미리암", "이드로", "여호수아", "갈렙", "기생라합", "아간", "옷니엘", "에훗", 
+                "드보라", "기드온", "삼손", "들릴라", "나오미", "보아스", "오벳", "이새", "한나", "사무엘", 
+                "사울", "다윗", "요나단", "골리앗", "밧세바", "나단", "암논", "압살롬", "솔로몬", "르호보암", 
+                "여로보암", "아합", "이세벨", "엘리야", "엘리사", "나아만", "히스기야", "요시야", "이사야", "예레미야", 
+                "에스겔", "다니엘", "사드락", "메삭", "아벳느고", "호세아", "요나", "에스라", "느헤미야", "에스더", 
+                "모르드개", "하만", "예수", "마리아", "세례요한", "베드로", "안드레", "야고보", "요한", "빌립", 
+                "바돌로매", "마태", "도마", "가룟유다", "삭개오", "니고데모", "막달라마리아", "나사로", "스데반", "바울", 
+                "바나바", "디모데", "아벨", "시므온", "유다", "입다", "이삭", "아론", "엘리"
+            ],
+            '과자': [
+                '새우깡', '감자깡', '고구마깡', '양파깡', '포카칩', '스윙칩', '수미칩', '허니버터칩', '눈을감자', '무뚝뚝감자칩',
+                '오감자', '예감', '구운감자', '꼬깔콘', '콘칲', '도리토스', '나쵸', '썬칩', '치토스', '오징어땅콩',
+                '맛동산', '꿀꽈배기', '조청유과', '쌀로별', '신당동떡볶이', '짱구', '죠리퐁', '카라멜콘땅콩', '바나나킥', '인디안밥',
+                '고래밥', '홈런볼', '초코송이', '칙촉', '촉촉한초코칩', '미쯔', '빈츠', '다이제', '초코하임', '화이트하임',
+                '쿠크다스', '초코파이', '몽쉘', '오예스', '카스타드', '마가렛트', '후렌치파이', '빅파이', '엄마손파이', '애플파이',
+                '찰떡파이', '오뜨', '아이비', '참크래커', '제크', '야채크래커', '고소미', '뽀또', '크라운산도', '롯데샌드',
+                '치즈샌드', '땅콩샌드', '국희땅콩샌드', '참붕어빵', '땅콩강정', '닭다리', '벌집핏자', '자갈치', '오징어집', '알새우칩',
+                '꽃게랑', '포스틱', '베이컨칩', '스모키베이컨칩', '야채타임', '쟈키쟈키', '쫄병스낵', '뿌셔뿌셔', '별뽀빠이', '밭두렁',
+                '맛기차콘', '차카니', '뻥이요', '사또밥', '별따먹자', '인절미스낵', '프링글스', '누네띠네', '롤리폴리', '통크',
+                '틴틴', '오사쯔', '웨하스', '버터링', '계란과자', '사브레', '빠다코코낫', '버터와플', '베베', '츄러스'
+            ],
+            '동물': [
+                '강아지', '고양이', '호랑이', '사자', '코끼리', '기린', '원숭이', '돼지', '토끼', '다람쥐',
+                '사슴', '얼룩말', '하마', '코뿔소', '캥거루', '코알라', '판다', '북극곰', '여우', '늑대',
+                '너구리', '수달', '해달', '고라니', '멧돼지', '오소리', '족제비', '고슴도치', '두더지', '박쥐',
+                '침팬지', '고릴라', '오랑우탄', '개코원숭이', '나무늘보', '개미핥기', '미어캣', '하이에나', '치타', '표범',
+                '스컹크', '카피바라', '알파카', '낙타', '기니피그', '햄스터', '친칠라', '범고래', '백상아리', '물개',
+                '바다표범', '바다코끼리', '거북이', '자라', '도마뱀', '카멜레온', '이구아나', '개구리', '두꺼비', '맹꽁이',
+                '도롱뇽', '구렁이', '코브라', '아나콘다', '독수리', '부엉이', '올빼미', '까치', '까마귀', '비둘기',
+                '앵무새', '제비', '타조', '펭귄', '갈매기', '두루미', '홍학', '펠리컨', '공작새', '오징어',
+                '문어', '낙지', '주꾸미', '해파리', '불가사리', '꽃게', '바닷가재', '나비', '잠자리', '매미',
+                '사마귀', '무당벌레', '장수풍뎅이'
+            ],
+            '스포츠': [
+                '축구', '야구', '농구', '배구', '테니스', '탁구', '배드민턴', '골프', '볼링', '당구',
+                '수영', '육상', '마라톤', '태권도', '유도', '검도', '합기도', '복싱', '권투', '레슬링',
+                '씨름', '펜싱', '사격', '승마', '체조', '피겨스케이팅', '쇼트트랙', '스피드스케이팅', '아이스하키', '컬링',
+                '스키', '스노보드', '봅슬레이', '스켈레톤', '루지', '조정', '카누', '요트', '다이빙', '서핑',
+                '수상스키', '클라이밍', '등산', '자전거', '사이클', '철인삼종경기', '리듬체조', '핸드볼', '럭비', '미식축구',
+                '에어로빅', '댄스스포츠', '크로스핏', '필라테스', '족구', '피구', '발야구', '소프트볼', '크리켓', '하키',
+                '게이트볼', '스쿼시', '카바디', '세팍타크로', '주짓수', '킥복싱', '무에타이', '스카이다이빙', '패러글라이딩', '번지점프',
+                '스노클링', '스쿠버다이빙', '윈드서핑', '웨이크보드', '카이트서핑', '프리다이빙', '인라인스케이트', '스케이트보드', '파쿠르', '카레이싱',
+                '트램펄린', '줄다리기', '투포환', '원반던지기', '창던지기', '높이뛰기', '멀리뛰기', '장대높이뛰기', '경보', '플라잉디스크',
+                '모터스포츠', '플로어볼', '넷볼', '보디빌딩', '팔씨름', '줄넘기', '도마', '이종격투기', '삼보', '카라테'
+            ],
+            '영화': [
+                '명량', '극한직업', '신과함께', '국제시장', '어벤져스', '겨울왕국', '아바타', '베테랑', '괴물', '도둑들',
+                '암살', '범죄도시', '광해', '택시운전사', '부산행', '변호인', '해운대', '실미도', '태극기휘날리며', '왕의남자',
+                '기생충', '보헤미안랩소디', '검사외전', '엑시트', '설국열차', '관상', '아이언맨', '인터스텔라', '스파이더맨', '수상한그녀',
+                '해적', '국가대표', '디워', '백두산', '과속스캔들', '탑건', '내부자들', '타짜', '올드보이', '살인의추억',
+                '아저씨', '신세계', '건축학개론', '아가씨', '친절한금자씨', '공동경비구역', '친구', '쉬리', '엽기적인그녀', '클래식',
+                '내머리속의지우개', '러브레터', '센과치히로의행방불명', '이웃집토토로', '하울의움직이는성', '너의이름은', '스즈메의문단속', '슬램덩크', '라이온킹', '알라딘',
+                '토이스토리', '미션임파서블', '다크나이트', '조커', '해리포터', '반지의제왕', '캐리비안의해적', '쥬라기공원', '스타워즈', '포레스트검프',
+                '쇼생크탈출', '레옹', '나홀로집에', '트랜스포머', '분노의질주', '마션', '그래비티', '라라랜드', '위대한쇼맨', '비긴어게인',
+                '노트북', '타이타닉', '맘마미아', '오션스일레븐', '인디아나존스', '킹스맨', '매드맥스', '엑스맨', '데드풀', '블랙팬서',
+                '닥터스트레인지', '캡틴아메리카', '토르', '헐크', '앤트맨', '가디언즈오브갤럭시', '원더우먼', '아쿠아맨', '배트맨', '슈퍼맨'
+            ],
+            '나라': [
+                '대한민국', '일본', '중국', '미국', '캐나다', '멕시코', '브라질', '아르헨티나', '칠레', '영국',
+                '프랑스', '독일', '이탈리아', '스페인', '러시아', '인도', '호주', '이집트', '남아프리카공화국', '나이지리아',
+                '케냐', '사우디아라비아', '이란', '이라크', '튀르키예', '그리스', '스웨덴', '노르웨이', '핀란드', '덴마크',
+                '네덜란드', '벨기에', '스위스', '오스트리아', '우크라이나', '베트남', '태국', '필리핀', '말레이시아', '인도네시아',
+                '싱가포르', '뉴질랜드', '대만', '홍콩', '카자흐스탄', '우즈베키스탄', '파키스탄', '방글라데시', '네팔', '스리랑카',
+                '아랍에미리트', '카타르', '이스라엘', '팔레스타인', '레바논', '요르단', '시리아', '아일랜드', '포르투갈', '헝가리',
+                '체코', '루마니아', '불가리아', '세르비아', '크로아티아', '슬로베니아', '알바니아', '조지아', '아르메니아', '아제르바이잔',
+                '리투아니아', '라트비아', '에스토니아', '벨라루스', '몰도바', '아이슬란드', '룩셈부르크', '모나코', '안도라', '산마리노',
+                '리히텐슈타인', '바티칸', '몰타', '키프로스', '콜롬비아', '페루', '베네수엘라', '에콰도르', '볼리비아', '파라과이',
+                '우루과이', '쿠바', '자메이카', '코스타리카', '파나마', '과테말라', '엘살바도르', '니카라과', '온두라스', '가나'
+            ],
+            '웹툰': [
+                '신의 탑', '외모지상주의', '전지적 독자 시점', '화산귀환', '여신강림', '연애혁명', '마음의 소리', '유미의 세포들', '스위트홈', '치즈인더트랩',
+                '호랑이형님', '갓 오브 하이스쿨', '노블레스', '기기괴괴', '타인은 지옥이다', '대학일기', '독립일기', '내 아이디는 강남미인', '이번 생도 잘 부탁해', '간 떨어지는 동거',
+                '오늘도 사랑스럽개', '소녀의 세계', '싸움독학', '참교육', '윈드브레이커', '김부장', '백수세끼', '광마회귀', '나노 마신', '캐슬',
+                '재혼 황후', '하루만 네가 되고 싶어', '쿠베라', '일렉시드', '뷰티풀 군바리', '청춘 블라썸', '프리드로우', '모죠의 일지', '냐한남자', '헬퍼',
+                '고수', '죽음에 관하여', '신과함께', '목욕의 신', '안나라수마나라', '방과 후 전쟁활동', '내일', '정년이', '마스크걸', '유쾌한 왕따',
+                '비질란테', '피라미드 게임', '더 복서', '약한영웅', '스터디그룹', '튜토리얼 탑의 고인물', '중증외상센터', '나이트런', '덴마', '쌉니다 천리마마트',
+                '어글리후드', '낮에 뜨는 달', '금수저', '마루는 강쥐', '똑 닮은 딸', '고래별', '집이 없어', '입학용병', '나노리스트', '소녀재판',
+                '빙탕후루', '전자오락수호대', '윌유메리미', '역대급 영지 설계사', '사신소년', '랜덤채팅의 그녀', '이말년 씨리즈', '선천적 얼간이들', '살아남은 로맨스', '아홉수 우리들',
+                '닥터 프로스트', '테러맨', '부활남', '신석기녀', '아메리카노 엑소더스', '이런 영웅은 싫어', '신도림', '윈터우즈', '나 혼자 만렙 뉴비', '광장',
+                '호랑이 들어와요', '연의 편지', '가담항설', '상남자', '가비지타임', '킬러 배드로', '신입사원 김철수', '투신전생기', '화이트 블러드', '지금 우리 학교는'
+            ]
+        };
+        initialsQuestions['과일'] = [
+            '사과', '배', '포도', '귤', '수박', '참외', '복숭아', '딸기', '자두', '매실',
+            '모과', '바나나', '파인애플', '멜론', '키위', '오렌지', '레몬', '자몽', '토마토', '블루베리',
+            '체리', '무화과', '석류', '한라봉', '레드향', '천혜향', '황금향', '유자', '감귤', '오디',
+            '복분자', '구아바', '파파야', '망고스틴', '리치', '람부탄', '코코넛', '아보카도', '두리안', '용과',
+            '패션후르츠', '대추', '잣', '호두', '땅콩', '아몬드', '은행', '다래', '으름', '산딸기',
+            '홍시', '단감', '방울토마토', '샤인머스캣', '청포도', '거봉', '라임', '잭프루트', '스타프루트', '깔라만시',
+            '구기자', '오미자', '산수유', '풋사과', '백도', '천도복숭아', '납작복숭아', '애플망고', '아사이베리', '크랜베리',
+            '라즈베리', '올리브', '피스타치오', '마카다미아', '캐슈넛', '피칸', '헤이즐넛', '비파', '포멜로', '스위티',
+            '청견', '카카오', '아세롤라', '노니', '보리수', '아로니아', '애플수박', '칸탈루프', '대저토마토', '구스베리',
+            '플럼코트', '카라카라', '아오리사과', '홍옥', '부사', '멀베리', '블러드오렌지', '탠저린', '골드키위', '하미과'
+        ];
+        initialsQuestions['직업'] = [
+            '경찰관', '소방관', '의사', '간호사', '교사', '선생님', '판사', '변호사', '미용사', '개발자',
+            '디자이너', '프로그래머', '유튜버', '승무원', '조종사', '군인', '농부', '어부', '과학자', '배우',
+            '개그맨', '코미디언', '아나운서', '기자', '작가', '화가', '음악가', '작곡가', '목수', '배관공',
+            '전기기사', '바리스타', '소믈리에', '경호원', '탐정', '택시기사', '버스기사', '우체부', '은행원', '회계사',
+            '세무사', '수의사', '치과의사', '한의사', '도배사', '환경미화원', '비서', '국회의원', '대통령', '외교관',
+            '통역사', '번역사', '축구선수', '야구선수', '농구선수', '배구선수', '수영선수', '프로게이머', '심판', '평론가',
+            '감독', '피디', '촬영기사', '조명기사', '스타일리스트', '모델', '사진작가', '웹툰작가', '만화가', '성우',
+            '안무가', '발레리나', '큐레이터', '사서', '연구원', '학원강사', '영양사', '물리치료사', '사회복지사', '상담사',
+            '펀드매니저', '보험설계사', '공인중개사', '감정평가사', '변리사', '노무사', '법무사', '속기사', '도선사', '기관사',
+            '우주비행사', '천문학자', '기상캐스터', '지질학자', '역사학자', '철학자', '수학자', '물리학자', '생물학자', '동물사육사'
+        ];
+         initialsQuestions['애니'] = [
+            '센과 치히로의 행방불명', '하울의 움직이는 성', '이웃집 토토로', '벼랑 위의 포뇨', '모노노케 히메', '마녀 배달부 키키', '귀를 기울이면', '고양이의 보은', '마루 밑 아리에티', '천공의 성 라퓨타',
+            '너의 이름은', '날씨의 아이', '스즈메의 문단속', '언어의 정원', '시간을 달리는 소녀', '늑대아이', '괴물의 아이', '썸머 워즈', '목소리의 형태', '너의 췌장을 먹고 싶어',
+            '겨울왕국', '토이 스토리', '인사이드 아웃', '주토피아', '코코', '엘리멘탈', '라이온 킹', '알라딘', '미녀와 야수', '인어공주',
+            '라푼젤', '모아나', '니모를 찾아서', '몬스터 주식회사', '인크레더블', '슈렉', '쿵푸팬더', '드래곤 길들이기', '미니언즈', '슈퍼배드',
+            '원피스', '나루토', '블리치', '명탐정 코난', '드래곤볼', '슬램덩크', '귀멸의 칼날', '진격의 거인', '주술회전', '체인소 맨',
+            '스파이 패밀리', '최애의 아이', '나의 히어로 아카데미아', '하이큐', '은혼', '강철의 연금술사', '데스노트', '원펀맨', '암살교실', '도쿄 구울',
+            '신세기 에반게리온', '소드 아트 온라인', '장송의 프리렌', '약사의 혼잣말', '죠죠의 기묘한 모험', '짱구는 못말려', '도라에몽', '포켓몬스터', '디지몬 어드벤처', '이누야샤',
+            '달빛천사', '카드캡터 체리', '달의 요정 세일러문', '개구리 중사 케로로', '꿈빛 파티시엘', '슈가슈가 룬', '아따맘마', '꼬마마법사 레미', '캐릭캐릭 체인지', '천사소녀 네티',
+            '아기공룡 둘리', '뽀롱뽀롱 뽀로로', '검정고무신', '신비아파트', '안녕 자두야', '날아라 호빵맨', '꼬마버스 타요', '로보카 폴리', '캐치 티니핑', '놓지마 정신줄',
+            '네모바지 스폰지밥', '톰과 제리', '심슨 가족', '핀과 제이크의 어드벤처 타임', '위 베어 베어스', '머털도사', '달려라 하니', '요리왕 비룡', '피구왕 통키', '축구왕 슛돌이'
+        ];
+
+        const naranQuestions = {
+            '순우리말': [
+                { "word": "윤슬", "meaning": "햇빛이나 달빛에 비치어 반짝이는 잔물결" }, { "word": "시나브로", "meaning": "모르는 사이에 조금씩 조금씩" }, { "word": "미리내", "meaning": "은하수를 뜻하는 순우리말" },
+                { "word": "안다미로", "meaning": "담은 것이 그릇에 넘치도록 많이" }, { "word": "온새미로", "meaning": "가르거나 쪼개지 않고 생김새 그대로" }, { "word": "도담도담", "meaning": "어린아이가 탈 없이 잘 놀며 자라는 모양" },
+                { "word": "늘품", "meaning": "앞으로 좋게 발전할 품질이나 품성" }, { "word": "너나들이", "meaning": "서로 너, 나 하고 부르며 허물없이 말을 건넴" }, { "word": "다솜", "meaning": "애틋하게 사랑함" },
+                { "word": "가람", "meaning": "강(江)을 뜻하는 순우리말" }, { "word": "미르", "meaning": "용(龍)을 뜻하는 순우리말" }, { "word": "마루", "meaning": "산의 꼭대기, 어떤 사물의 가장 높은 곳" },
+                { "word": "라온", "meaning": "'즐거운'이라는 뜻의 옛말" }, { "word": "가온", "meaning": "세상의 중심이 되라는 뜻 (가운데)" }, { "word": "아람", "meaning": "밤이나 상수리 따위가 충분히 익어 벌어진 상태" },
+                { "word": "달보드레", "meaning": "연하고 달콤하다" }, { "word": "여우비", "meaning": "볕이 나 있는 날 잠깐 오다가 그치는 비" }, { "word": "단비", "meaning": "꼭 필요할 때 알맞게 내리는 비" },
+                { "word": "소나기", "meaning": "갑자기 세차게 쏟아지다가 곧 그치는 비" }, { "word": "가랑비", "meaning": "가늘게 내리는 비" }, { "word": "이슬비", "meaning": "가랑비보다 더 가늘게 내리는 비" },
+                { "word": "먼지잼", "meaning": "비가 겨우 먼지나 잠재울 정도로 조금 옴" }, { "word": "비나리", "meaning": "앞길의 행복을 비는 말" }, { "word": "비설거지", "meaning": "비가 오려고 할 때 비를 맞지 않게 물건을 치우는 일" },
+                { "word": "비꽃", "meaning": "비가 내리기 시작할 때 빗방울이 몇 방울 떨어지는 현상" }, { "word": "나비잠", "meaning": "갓난아이가 두 팔을 머리 위로 벌리고 편히 자는 잠" }, { "word": "새우잠", "meaning": "새우처럼 등을 구부리고 자는 잠" },
+                { "word": "쪽잠", "meaning": "짧은 틈을 타서 불편하게 자는 잠" }, { "word": "선잠", "meaning": "깊이 들지 못하고 얕게 든 잠" }, { "word": "그루잠", "meaning": "깨었다가 다시 든 잠" },
+                { "word": "단잠", "meaning": "아주 달게 푹 자는 잠" }, { "word": "꽃잠", "meaning": "신랑 신부가 첫날밤에 자는 깊은 잠" }, { "word": "노루잠", "meaning": "깊이 들지 못하고 자꾸 깨는 잠" },
+                { "word": "샛별", "meaning": "새벽에 동쪽 하늘에서 반짝이는 금성" }, { "word": "닻별", "meaning": "카시오페이아자리를 뜻하는 말" }, { "word": "살별", "meaning": "꼬리를 길게 끄는 혜성" },
+                { "word": "별똥별", "meaning": "우주에서 떨어지며 빛을 내는 유성" }, { "word": "해돋이", "meaning": "해가 막 솟아오르는 때나 그 현상" }, { "word": "해넘이", "meaning": "해가 지는 때나 그 현상" },
+                { "word": "돋을볕", "meaning": "아침에 해가 솟아오를 때의 햇볕" }, { "word": "여우볕", "meaning": "비나 눈이 오는 날 잠깐 났다가 숨는 볕" }, { "word": "물비늘", "meaning": "잔잔한 물결이 햇살에 비쳐 반짝이는 모양" },
+                { "word": "산돌림", "meaning": "산기슭에 여기저기 내리는 소나기" }, { "word": "하늬바람", "meaning": "서쪽에서 불어오는 시원한 바람" }, { "word": "마파람", "meaning": "남쪽에서 불어오는 바람" },
+                { "word": "샛바람", "meaning": "동쪽에서 불어오는 바람" }, { "word": "된바람", "meaning": "북쪽에서 불어오는 거센 바람" }, { "word": "높새바람", "meaning": "북동쪽에서 불어오는 바람" },
+                { "word": "소담하다", "meaning": "생김새가 탐스럽다" }, { "word": "아스라이", "meaning": "아득히 멀고 희미하게" }, { "word": "길라잡이", "meaning": "길을 안내해 주는 사람" },
+                { "word": "길섶", "meaning": "길의 가장자리" }, { "word": "바투", "meaning": "두 물체 사이가 몹시 가깝게" }, { "word": "볼우물", "meaning": "보조개를 뜻하는 예쁜 순우리말" },
+                { "word": "쪽빛", "meaning": "맑고 푸른 바다나 하늘 같은 빛" }, { "word": "가시버시", "meaning": "아내와 남편을 묶어 이르는 말 (부부)" }, { "word": "띠앗", "meaning": "형제나 자매 사이의 우애심" },
+                { "word": "까막눈", "meaning": "글을 읽을 줄 모르는 사람" }, { "word": "풋내기", "meaning": "경험이 없어서 일에 서투른 사람" }, { "word": "토박이", "meaning": "대대로 그 땅에서 나서 정착하여 사는 사람" },
+                { "word": "텃세", "meaning": "먼저 자리 잡은 사람이 나중에 온 사람을 업신여김" }, { "word": "모꼬지", "meaning": "놀이나 잔치로 여러 사람이 모이는 일" }, { "word": "품앗이", "meaning": "힘든 일을 서로 거들어 주면서 품을 지는 일" },
+                { "word": "마중", "meaning": "오는 사람을 나가서 맞이함" }, { "word": "배웅", "meaning": "떠나는 사람을 따라 나가서 작별하여 보냄" }, { "word": "마중물", "meaning": "펌프에서 물이 안 나올 때 위에서 붓는 물" },
+                { "word": "모레", "meaning": "내일의 다음 날" }, { "word": "글피", "meaning": "모레의 다음 날" }, { "word": "그글피", "meaning": "글피의 다음 날" },
+                { "word": "사흘", "meaning": "세 날 (3일)" }, { "word": "나흘", "meaning": "네 날 (4일)" }, { "word": "닷새", "meaning": "다섯 날 (5일)" },
+                { "word": "엿새", "meaning": "여섯 날 (6일)" }, { "word": "이레", "meaning": "일곱 날 (7일)" }, { "word": "여드레", "meaning": "여덟 날 (8일)" },
+                { "word": "아흐레", "meaning": "아홉 날 (9일)" }, { "word": "열흘", "meaning": "열 날 (10일)" }, { "word": "보름", "meaning": "열닷새, 음력 15일" },
+                { "word": "그믐", "meaning": "음력으로 그달의 마지막 날" }, { "word": "마수걸이", "meaning": "맨 처음으로 물건을 파는 일" }, { "word": "자투리", "meaning": "자르고 남은 천이나 조각" },
+                { "word": "벼락치기", "meaning": "기한이 임박하여서야 서둘러서 하는 일" }, { "word": "부랴부랴", "meaning": "매우 급하게 서두르는 모양" }, { "word": "설레발", "meaning": "몹시 서두르며 부산하게 구는 행동" },
+                { "word": "호들갑", "meaning": "경망스럽고 야단스러운 말이나 행동" }, { "word": "지름길", "meaning": "멀리 돌지 않고 가깝게 질러가는 길" }, { "word": "홀로서기", "meaning": "남에게 의지하지 않고 스스로 살아감" },
+                { "word": "누리", "meaning": "세상을 뜻하는 순우리말" }, { "word": "꽃샘추위", "meaning": "이른 봄꽃이 필 무렵의 추위" }, { "word": "함박눈", "meaning": "굵고 탐스럽게 내리는 눈" },
+                { "word": "둔치", "meaning": "물이 있는 곳의 가장자리 평지" }, { "word": "여울", "meaning": "강이나 바다의 물살이 세게 흐르는 곳" }, { "word": "우레", "meaning": "천둥을 이르는 순우리말" },
+                { "word": "우듬지", "meaning": "나무의 맨 꼭대기 줄기" }, { "word": "주전부리", "meaning": "때를 가리지 않고 군것질하는 입버릇" }, { "word": "짬짜미", "meaning": "남모르게 자기들끼리만 짜고 하는 약속" },
+                { "word": "깜냥", "meaning": "어떤 일을 해낼 만한 능력" }, { "word": "벼리", "meaning": "일이나 글의 뼈대가 되는 줄거리" }, { "word": "우수리", "meaning": "물건값을 치르고 거슬러 받는 잔돈" },
+                { "word": "희나리", "meaning": "채 마르지 않은 장작" }
+            ]
+        };
+
+        const unanimityQuestions = {
+            '일심동체': [
+                // 스포츠/인물
+                '야구', '축구', '농구', '배구', '탁구', '골프', '수영', '양궁', '태권도', '유도', '권투', '씨름', '스키', '스케이트', '서핑', '김연아', '손흥민', '박지성', '유재석', '강호동', '이효리', '비', '싸이', '아이유', '방탄소년단', '블랙핑크', '뉴진스', '아이브', '세종대왕', '이순신', '신사임당', '안중근', '유관순', '일론머스크', '스티브잡스', '빌게이츠', '오바마', '트럼프', '바이든', '푸틴',
+                // 종교
+                '목사님', '예수님', '하나님', '성령님', '기도', '찬양', '성경', '교회', '십자가', '아멘', '할렐루야', '믿음', '소망', '사랑', '천국', '지옥', '천사', '악마', '선악과', '노아의방주', '오병이어', '다윗', '골리앗', '모세', '십계명', '삼손', '요나', '베드로', '바울', '사도신경', '주기도문', '심방', '새벽기도', '수련회', '부흥회', '성가대', '주일학교', '큐티', '전도', '세례',
+                // 동물
+                '원숭이', '코끼리', '기린', '사자', '호랑이', '개구리', '강아지', '고양이', '토끼', '뱀', '거북이', '악어', '하마', '코뿔소', '캥거루', '타조', '펭귄', '독수리', '참새', '비둘기', '닭', '오리', '돼지', '소', '말', '양', '염소', '곰', '여우', '늑대', '사슴', '얼룩말', '낙타', '돌고래', '고래', '상어', '문어', '오징어', '게', '새우',
+                // 행동/감정
+                '하트', '애교', '사진찍기', '먹방', '유튜버', '의사', '경찰관', '소방관', '군인', '선생님', '아기', '할머니', '할아버지', '엄마', '아빠', '화남', '슬픔', '기쁨', '놀람', '행복', '사랑', '미용실', '샤워', '세수', '양치질', '운전', '요리', '청소', '빨래', '설거지', '공부', '시험', '컴퓨터', '스마트폰', '전화', '기타', '피아노', '드럼', '바이올린', '노래방',
+                // 장소/사물
+                '영화관', '놀이공원', '롤러코스터', '회전목마', '바이킹', '워터파크', '미끄럼틀', '눈싸움', '낚시', '등산', '캠핑', '바다', '산', '강', '하늘', '구름', '태양', '달', '별', '무지개'
+            ]
+        };
+
+        // --- 소켓 통신 ---
+        const socket = io();
+
+        // --- 오디오 객체 ---
+        const alarmSound = new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_12b0c1b432.mp3'); // 게임 종료 알람 소리
+
+        // --- 게임 상태 변수 ---
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let correctScore = 0;
+        let passScore = 0;
+        let currentTopic = '';
+        let currentGameType = '';
+        let gameTimer = null;
+        let configuredGameType = '';
+        let configuredTopic = '';
+        let timeRemaining = 0;
+        let revealedHintCount = 0; // 순우리말 퀴즈 힌트 상태
+
+        // --- DOM 요소 ---
+        const screens = document.querySelectorAll('.screen');
+        const questionCard = document.getElementById('question-card');
+        const correctCountEl = document.getElementById('correct-count');
+        const passCountEl = document.getElementById('pass-count');
+        const timerEl = document.getElementById('timer');
+        const answerRevealEl = document.getElementById('answer-reveal');
+        const questionNumberEl = document.getElementById('question-number');
+        const hintRevealEl = document.getElementById('hint-reveal');
+        const charadesRecordListEl = document.getElementById('charades-record-list');
+        const initialsRecordListEl = document.getElementById('initials-record-list');
+        const unanimityRecordListEl = document.getElementById('unanimity-record-list');
+        const naranRecordListEl = document.getElementById('naran-record-list');
+
+        // --- 화면 전환 함수 ---
+        function showScreen(screenId) {
+            screens.forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+            if (screenId === 'charades-topic-menu') {
+                loadRecords('charades');
+            } else if (screenId === 'initials-topic-menu') {
+                loadRecords('initials');
+            } else if (screenId === 'naran-menu') {
+                loadRecords('naran');
+            } else if (screenId === 'unanimity-menu') {
+                loadRecords('unanimity');
+            }
+            stopTimer(); // 화면 전환 시 항상 타이머 정지
+        }
+
+        // --- 게임 로직 함수 ---
+        function selectGame(gameType) {
+            if (gameType === 'charades') {
+                showScreen('charades-topic-menu');
+            } else if (gameType === 'initials') {
+                showScreen('initials-topic-menu');
+            } else if (gameType === 'naran') {
+                showScreen('naran-menu');
+            } else if (gameType === 'unanimity') {
+                showScreen('unanimity-menu');
+            }
+        }
+
+        function showGameConfig(gameType, topic) {
+            configuredGameType = gameType;
+            configuredTopic = topic;
+
+            const configTitle = document.getElementById('config-title');
+            const configBackBtn = document.getElementById('config-back-btn');
+
+            configTitle.innerText = `[${topic}] 시간을 설정하세요`;
+
+            if (gameType === 'charades') {
+                configBackBtn.onclick = () => showScreen('charades-topic-menu');
+            } else if (gameType === 'initials') {
+                configBackBtn.onclick = () => showScreen('initials-topic-menu');
+            } else {
+                configBackBtn.onclick = () => showScreen('main-menu');
+            }
+            showScreen('game-config-screen');
+        }
+
+        function startConfiguredGame() {
+            // 설정 화면에서 '게임 시작'을 눌렀을 때 호출
+            startGame(configuredGameType, configuredTopic);
+        }
+
+        function startGame(gameType, topic) {
+            currentGameType = gameType;
+            currentTopic = topic;
+
+            let minutes, seconds, backScreenId;
+
+            // 공용 설정 화면에서 시간 가져오기
+            if (gameType === 'charades' || gameType === 'initials') {
+                minutes = parseInt(document.getElementById('config-time-minutes').value) || 0;
+                seconds = parseInt(document.getElementById('config-time-seconds').value) || 0;
+                backScreenId = (gameType === 'charades') ? 'charades-topic-menu' : 'initials-topic-menu';
+            } else { // 단일 주제 게임들
+                const minutesInputId = `${gameType}-time-minutes`;
+                const secondsInputId = `${gameType}-time-seconds`;
+                minutes = parseInt(document.getElementById(minutesInputId).value) || 0;
+                seconds = parseInt(document.getElementById(secondsInputId).value) || 0;
+                backScreenId = `${gameType}-menu`;
+            }
+ 
+            if (gameType === 'initials') {
+                questionCard.classList.add('initials-card');
+                document.getElementById('correct-btn').innerText = '✅ 정답 확인';
+            } else {
+                questionCard.classList.remove('initials-card');
+                document.getElementById('correct-btn').innerText = (gameType === 'naran') ? '✅ 뜻 확인' : '✅ 정답 / 다음';
+            }
+
+            if (gameType === 'naran') {
+                document.getElementById('hint-controls').style.display = 'grid';
+            } else {
+                document.getElementById('hint-controls').style.display = 'none';
+            }
+
+            // 1. 시간 설정 가져오기
+            timeRemaining = (minutes * 60) + seconds;
+
+            if (timeRemaining <= 0) { timeRemaining = 60; } // 기본값 1분
+
+            // 2. 게임 화면으로 전환 및 뒤로가기 버튼 설정
+            showScreen('game-screen');
+            document.getElementById('game-screen').querySelector('.btn-back').onclick = () => showScreen(backScreenId);
+
+            answerRevealEl.style.display = 'none';
+            hintRevealEl.style.display = 'none'; // 게임 시작 시 힌트 영역 숨기기
+            // 3. 게임 상태 초기화
+            let questionSet;
+            if (gameType === 'initials') {
+                questionSet = initialsQuestions;
+            } else if (gameType === 'naran') {
+                questionSet = naranQuestions;
+            }  else if (gameType === 'unanimity') {
+                questionSet = unanimityQuestions;
+            } else {
+                questionSet = charadesQuestions;
+            }
+            currentQuestions = [...questionSet[topic]].sort(() => Math.random() - 0.5);
+            currentQuestionIndex = 0;
+            correctScore = 0;
+            passScore = 0;
+            revealedHintCount = 0; // 힌트 상태 초기화
+
+            // 4. 화면 표시 업데이트 및 타이머 시작
+            updateScore();
+            displayNextQuestion();
+            startTimer();
+
+            // 사회자에게 게임 시작 알림
+            socket.emit('game-state-update', {
+                type: 'start',
+                topic: currentTopic,
+                correct: correctScore,
+                pass: passScore,
+                time: timeRemaining,
+                // 첫 문제 정보도 함께 보냄
+                ...getQuestionInfo(0)
+            });
+        }
+        function startTimer() {
+            stopTimer(); // 기존 타이머가 있다면 정지
+            updateTimerDisplay();
+
+            gameTimer = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                if (timeRemaining <= 0) {
+                    socket.emit('game-state-update', {
+                        type: 'end',
+                        correct: correctScore,
+                        pass: passScore
+                    });
+                    alarmSound.play(); // 시간이 다 되면 알람 울리기
+                    stopTimer();
+                    showResult();
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(gameTimer);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
+            const seconds = (timeRemaining % 60).toString().padStart(2, '0');
+            timerEl.innerText = `${minutes}:${seconds}`;
+            socket.emit('game-state-update', {
+                type: 'timer',
+                time: timeRemaining
+            });
+        }
+
+        // 단어의 초성을 추출하는 함수
+        function getInitials(word) {
+            const cho = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+            let result = "";
+            for(let i=0; i<word.length; i++) {
+                const code = word.charCodeAt(i)-44032;
+                if (code > -1 && code < 11172) result += cho[Math.floor(code/588)];
+                else result += word.charAt(i); // 한글이 아니면 그대로 추가
+            }
+            return result;
+        }
+
+        function getQuestionInfo(index) {
+            if (index >= currentQuestions.length) return null;
+
+            const question = currentQuestions[index];
+            let questionText, answerText;
+
+            if (currentGameType === 'initials') {
+                questionText = getInitials(question);
+                answerText = question;
+            } else if (currentGameType === 'naran') {
+                questionText = question.word;
+                answerText = question.meaning;
+            } else { // 'charades', 'unanimity' 등
+                questionText = question;
+                answerText = question;
+            }
+            return {
+                questionText,
+                answerText,
+                currentIndex: index,
+                totalQuestions: currentQuestions.length
+            };
+        }
+
+        function displayNextQuestion() {
+            if (currentQuestionIndex < currentQuestions.length) {
+                const info = getQuestionInfo(currentQuestionIndex);
+
+                // 문제 번호 표시
+                questionNumberEl.innerText = `${info.currentIndex + 1} / ${info.totalQuestions}`;
+                questionCard.innerText = info.questionText;
+
+                // 버튼 텍스트 설정
+                if (currentGameType === 'unanimity') {
+                    document.getElementById('correct-btn').innerText = '✅ 성공 / 다음';
+                } else {
+                    // startGame에서 이미 설정된 값을 유지하거나, 필요 시 다른 로직 추가
+                }
+            } else {
+                socket.emit('game-state-update', {
+                    type: 'end',
+                    correct: correctScore,
+                    pass: passScore
+                });
+                // 모든 문제를 다 풀었을 때
+                showResult();
+            }
+        }
+
+        function updateScore() {
+            correctCountEl.innerText = `정답: ${correctScore}`;
+            passCountEl.innerText = `패스: ${passScore}`;
+            socket.emit('game-state-update', {
+                type: 'score',
+                correct: correctScore,
+                pass: passScore
+            });
+        }
+
+        function handleCorrect() {
+            if (currentGameType === 'initials') {
+                // 정답 확인 버튼을 처음 눌렀을 때
+                if (answerRevealEl.style.display === 'none') { 
+                    answerRevealEl.innerText = currentQuestions[currentQuestionIndex];
+                    answerRevealEl.style.display = 'block';
+                    document.getElementById('correct-btn').innerText = '👍 맞혔어요!';
+                } else { // '맞혔어요!' 버튼을 눌렀을 때
+                    correctScore++;
+                    handleNext();
+                } 
+            } else if (currentGameType === 'naran') {
+                // 힌트가 표시 중이거나(💡), 아직 아무것도 표시되지 않았을 때
+                if (answerRevealEl.style.display === 'none' || answerRevealEl.innerText.startsWith('💡')) {
+                    answerRevealEl.innerText = currentQuestions[currentQuestionIndex].meaning;
+                    answerRevealEl.style.display = 'block';
+                    document.getElementById('correct-btn').innerText = '👍 맞혔어요!';
+                } else {
+                    // 전체 뜻이 표시된 상태에서 눌렀을 때
+                    correctScore++;
+                    handleNext();
+                }
+            } else if (currentGameType === 'charades' || currentGameType === 'unanimity') {
+                correctScore++;
+                handleNext();
+            }
+        }
+
+        function handlePass() {
+            passScore++;
+            handleNext();
+        }
+
+        function handleNext() {
+            clearTimeout(pressTimer); // 다음으로 넘어갈 때 '길게 누르기' 타이머 취소
+            currentQuestionIndex++;
+            // 다음 문제로 넘어갈 때 정답 표시 영역을 초기화합니다.
+            answerRevealEl.style.display = 'none';
+            hintRevealEl.style.display = 'none';
+            revealedHintCount = 0; // 다음 문제로 넘어갈 때 힌트 상태 초기화
+            if (currentGameType === 'initials') {
+                document.getElementById('correct-btn').innerText = '✅ 정답 확인';
+            } else if (currentGameType === 'naran') {
+                document.getElementById('correct-btn').innerText = '✅ 뜻 확인';
+            }
+            updateScore();
+            displayNextQuestion();
+
+            // 사회자에게 다음 문제 정보 전송
+            const nextQuestionInfo = getQuestionInfo(currentQuestionIndex);
+            if (nextQuestionInfo) {
+                socket.emit('game-state-update', { type: 'next', ...nextQuestionInfo, correct: correctScore, pass: passScore });
+            }
+        }
+
+        function showHint(hintNumber) {
+            if (currentGameType !== 'naran') return;
+
+            // 힌트 버튼을 누르면 항상 정답 영역이 보이도록 처리
+            answerRevealEl.style.display = 'block';
+
+            // 이미 더 많은 힌트가 공개되었다면, 더 적은 힌트로 되돌아가지 않음
+            if (hintNumber <= revealedHintCount) return;
+            revealedHintCount = hintNumber;
+
+            const currentMeaning = currentQuestions[currentQuestionIndex].meaning;
+            const words = currentMeaning.split(' ');
+
+            const hintText = words.map((word, index) => {
+                // hintNumber(1 또는 2)보다 작은 인덱스의 단어만 보여줌
+                return index < hintNumber ? word : '＿＿';
+            }).join(' ');
+
+            answerRevealEl.innerText = `💡 ${hintText}`;
+        }
+
+        function showResult() {
+            stopTimer();
+            socket.emit('game-state-update', {
+                type: 'end',
+                correct: correctScore,
+                pass: passScore
+            });
+            document.getElementById('result-topic').innerText = `주제: ${currentTopic}`;
+            document.getElementById('result-score').innerText = `결과: 정답 ${correctScore}개 / 패스 ${passScore}회`;
+            showScreen('result-screen');
+        }
+
+        // --- 기록 관련 함수 ---
+        function saveRecord() {
+            const teamName = prompt("기록을 남길 팀 이름을 입력하세요:", "1팀");
+            if (!teamName) return; // 취소하면 저장하지 않음
+
+            const records = JSON.parse(localStorage.getItem('gameRecords')) || [];
+            const newRecord = {
+                team: teamName,
+                topic: currentTopic,
+                score: correctScore,
+                game: currentGameType,
+                pass: passScore,
+                date: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit'})
+            };
+            records.push(newRecord);
+            localStorage.setItem('gameRecords', JSON.stringify(records));
+            
+            alert(`${teamName}의 기록이 저장되었습니다!`);
+            showScreen('main-menu');
+        }
+
+        function loadRecords(gameType) {
+            const records = JSON.parse(localStorage.getItem('gameRecords')) || [];
+            const filteredRecords = records.filter(r => r.game === gameType);
+
+            let targetListEl;
+            if (gameType === 'charades') targetListEl = charadesRecordListEl;
+            else if (gameType === 'initials') targetListEl = initialsRecordListEl;
+            else if (gameType === 'naran') targetListEl = naranRecordListEl;
+            else if (gameType === 'unanimity') targetListEl = unanimityRecordListEl;
+            
+            targetListEl.innerHTML = filteredRecords.length === 0 ? '<li>기록이 없습니다.</li>' : '';
+            filteredRecords.slice().reverse().forEach(record => { // 최신 기록이 위로 오도록
+                let gameName = '몸';
+                if (record.game === 'initials') {
+                    gameName = '초성';
+                } else if (record.game === 'unanimity') {
+                    gameName = '일심동체';
+                }
+                targetListEl.innerHTML += `<li><span>${record.team} (${gameName})</span> <span>성공 ${record.score} / 패스 ${record.pass || 0}</span></li>`;
+            });
+        }
+
+        function clearRecords(gameType) {
+            if (confirm(`정말로 이 게임의 모든 기록을 삭제하시겠습니까?`)) {
+                const allRecords = JSON.parse(localStorage.getItem('gameRecords')) || [];
+                const remainingRecords = allRecords.filter(r => r.game !== gameType);
+                if (remainingRecords.length > 0) {
+                    localStorage.setItem('gameRecords', JSON.stringify(remainingRecords));
+                } else {
+                    localStorage.removeItem('gameRecords');
+                }
+                loadRecords(gameType);
+            }
+        }
+
+        // --- 키보드 제어 기능 ---
+        document.addEventListener('keydown', function(event) {
+            // 게임 진행 화면이 아니면 작동 안 함
+            if (!document.getElementById('game-screen').classList.contains('active')) {
+                return;
+            }
+
+            // 오른쪽 화살표(→) 또는 스페이스바: '정답/다음' 버튼 클릭 효과
+            if (event.key === 'ArrowRight' || event.code === 'Space') {
+                event.preventDefault(); // 스페이스바의 스크롤 기능 방지
+                document.getElementById('correct-btn').click();
+            } 
+            // 왼쪽 화살표(←): '패스' 버튼 클릭 효과
+            else if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                document.getElementById('pass-btn').click();
+            }
+        });
+
+        // --- 사회자용 정답 확인 기능 (길게 누르기) ---
+        let pressTimer;
+        const correctButton = document.getElementById('correct-btn');
+
+        correctButton.addEventListener('mousedown', () => {
+            // 초성퀴즈 또는 순우리말퀴즈 게임일 때만 동작
+            if (currentGameType === 'initials' || currentGameType === 'naran') {
+                pressTimer = setTimeout(() => {
+                    const answer = (currentGameType === 'initials') 
+                        ? currentQuestions[currentQuestionIndex] 
+                        : currentQuestions[currentQuestionIndex].meaning;
+                    answerRevealEl.innerText = `🤫 ${answer}`;
+                    answerRevealEl.style.display = 'block';
+                }, 500); // 0.5초 동안 누르고 있으면 정답 표시
+            }
+        });
+
+        correctButton.addEventListener('mouseup', () => clearTimeout(pressTimer));
+        correctButton.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+        correctButton.addEventListener('touchstart', () => clearTimeout(pressTimer)); // 모바일 터치 시작 시 이전 타이머 제거
+        correctButton.addEventListener('touchend', () => clearTimeout(pressTimer));
+
+        // 초기 화면 설정
+        document.addEventListener('DOMContentLoaded', () => {
+            showScreen('main-menu'); // 페이지 로드 시 바로 메인 메뉴 표시
+        });
+    </script>
+</body>
+</html>

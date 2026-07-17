@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사회자 진행 화면</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+        :root { --primary-color: #FF6B6B; --secondary-color: #4ECDC4; --bg-color: #F7FFF7; --dark-color: #4A4A4A; }
+        body { font-family: 'Jua', sans-serif; margin: 0; background-color: #2c3e50; color: white; text-align: center; padding: 2rem; }
+        .container { max-width: 800px; margin: auto; }
+        h1 { font-size: 3rem; text-shadow: 2px 2px 0px #000; }
+        .status-board { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 20px; margin-bottom: 2rem; }
+        .status-item { font-size: 2rem; }
+        .status-item h2 { margin: 0 0 0.5rem 0; font-size: 1.5rem; opacity: 0.8; }
+        .card { background: white; color: var(--dark-color); border-radius: 20px; padding: 2rem; margin-bottom: 1.5rem; }
+        .card h2 { margin-top: 0; font-size: 2rem; color: var(--secondary-color); }
+        .card p { font-size: 4rem; font-weight: 900; margin: 0; word-break: keep-all; }
+        #answer-card p { font-size: 2.5rem; color: var(--primary-color); }
+        .placeholder { color: #7f8c8d; font-size: 2rem; display: flex; align-items: center; justify-content: center; min-height: 50vh; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>사회자 진행 화면 🎤</h1>
+
+        <div id="game-view" style="display: none;">
+            <div class="status-board">
+                <div class="status-item">
+                    <h2 id="topic">주제</h2>
+                    <span id="question-number">0/0</span>
+                </div>
+                <div class="status-item">
+                    <h2>남은 시간</h2>
+                    <span id="timer">00:00</span>
+                </div>
+                <div class="status-item">
+                    <h2>점수</h2>
+                    <span id="score">정답 0 / 패스 0</span>
+                </div>
+            </div>
+
+            <div id="question-card" class="card">
+                <h2>문제</h2>
+                <p id="question-text">문제 내용</p>
+            </div>
+
+            <div id="answer-card" class="card">
+                <h2>정답</h2>
+                <p id="answer-text">정답 내용</p>
+            </div>
+        </div>
+
+        <div id="waiting-view" class="placeholder">
+            <p>게임이 시작되기를 기다리는 중입니다...</p>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        const gameView = document.getElementById('game-view');
+        const waitingView = document.getElementById('waiting-view');
+
+        const topicEl = document.getElementById('topic');
+        const questionNumEl = document.getElementById('question-number');
+        const timerEl = document.getElementById('timer');
+        const scoreEl = document.getElementById('score');
+        const questionTextEl = document.getElementById('question-text');
+        const answerTextEl = document.getElementById('answer-text');
+
+        socket.on('game-state-update', (data) => {
+            if (data.type === 'start' || data.type === 'next' || data.type === 'score' || data.type === 'timer') {
+                gameView.style.display = 'block';
+                waitingView.style.display = 'none';
+            }
+
+            switch(data.type) {
+                case 'start':
+                case 'next':
+                    topicEl.innerText = data.topic;
+                    questionNumEl.innerText = `${data.currentIndex + 1} / ${data.totalQuestions}`;
+                    questionTextEl.innerText = data.questionText;
+                    answerTextEl.innerText = data.answerText;
+                    // fall-through to update score
+                case 'score':
+                    scoreEl.innerText = `정답 ${data.correct} / 패스 ${data.pass}`;
+                    break;
+                case 'timer':
+                    const minutes = Math.floor(data.time / 60).toString().padStart(2, '0');
+                    const seconds = (data.time % 60).toString().padStart(2, '0');
+                    timerEl.innerText = `${minutes}:${seconds}`;
+                    break;
+                case 'end':
+                    gameView.style.display = 'none';
+                    waitingView.style.display = 'block';
+                    waitingView.querySelector('p').innerText = `게임 종료! 최종 점수: 정답 ${data.correct}개`;
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>
