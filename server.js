@@ -21,17 +21,9 @@ app.get('/game', (req, res) => {
     }
 });
 
-app.get('/host_login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'host_login.html'));
-});
-
+// 사회자 페이지는 비밀번호 없이 바로 접속 가능하도록 변경
 app.get('/host', (req, res) => {
-    const { password } = req.query;
-    if (password === '121214') {
-        res.sendFile(path.join(__dirname, 'public', 'host.html'));
-    } else {
-        res.status(401).send('<h1>접근 권한이 없습니다.</h1><p><a href="/host_login">로그인 페이지로 돌아가기</a></p>');
-    }
+    res.sendFile(path.join(__dirname, 'public', 'host.html'));
 });
 
 // 2. 그 외의 모든 정적 파일(css, js, 이미지 등)은 'public' 폴더에서 제공합니다.
