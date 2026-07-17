@@ -1,17 +1,18 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require("socket.io");
+
 const app = express();
 const server = http.createServer(app);
 
-// Socket.IO 서버를 먼저 초기화합니다.
+// Socket.IO 서버를 먼저 초기화합니다. serveClient 옵션은 기본값이 true이므로 생략 가능합니다.
 const io = new Server(server, {
     serveClient: true
 });
 
 // 그 다음에 Express 미들웨어와 라우트를 설정합니다.
 // 로고 이미지(logo.png) 같은 정적 파일들을 위해 필요합니다.
-app.use(express.static('public', { index: false }));
+app.use(express.static('public'));
 
 // 1. 플레이어용 로그인 페이지 라우트
 app.get('/', (req, res) => {
