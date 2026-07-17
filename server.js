@@ -10,10 +10,6 @@ const io = new Server(server, {
     serveClient: true
 });
 
-// 그 다음에 Express 미들웨어와 라우트를 설정합니다.
-// 로고 이미지(logo.png) 같은 정적 파일들을 위해 필요합니다.
-app.use(express.static('public'));
-
 // 1. 플레이어용 로그인 페이지 라우트
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/public/login.html');
@@ -45,6 +41,10 @@ app.get('/host', (req, res) => {
         res.status(401).send('<h1>접근 권한이 없습니다.</h1><p><a href="/host_login">로그인 페이지로 돌아가기</a></p>');
     }
 });
+
+// 위에서 정의된 특정 경로 외의 모든 요청은 public 폴더에서 파일을 찾아 제공합니다.
+// (예: /logo.png 요청 시 public/logo.png 파일을 보냄)
+app.use(express.static('public'));
 
 io.on('connection', (socket) => {
     console.log('✅ 클라이언트가 연결되었습니다.');
