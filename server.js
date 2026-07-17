@@ -22,7 +22,8 @@ app.get('/game', (req, res) => {
 });
 
 // 사회자 페이지는 비밀번호 없이 바로 접속 가능하도록 변경
-app.get('/host', (req, res) => {
+// /host 와 /host/ 두 가지 경로를 모두 처리합니다.
+app.get('/host{/}?', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'host.html'));
 });
 
