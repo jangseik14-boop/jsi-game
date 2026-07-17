@@ -6,10 +6,14 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// public 폴더의 모든 파일을 바로 제공하지 않도록 변경합니다.
-// app.use(express.static('public'));
-// 대신, 필요한 파일만 선택적으로 제공합니다.
-app.use(express.static('public', { index: false })); // index.html 자동 제공 비활성화
+// Socket.IO 클라이언트 스크립트 경로를 명시적으로 허용합니다.
+app.get('/socket.io/socket.io.js', (req, res) => {
+    res.sendFile(__dirname + '/node_modules/socket.io/client-dist/socket.io.js');
+});
+
+// public 폴더의 파일들을 제공하되, index.html은 자동으로 제공하지 않습니다.
+// 로고 이미지(logo.png) 같은 파일들을 위해 필요합니다.
+app.use(express.static('public', { index: false }));
 
 // 1. 플레이어용 로그인 페이지 라우트
 app.get('/', (req, res) => {
