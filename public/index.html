@@ -83,6 +83,7 @@
                 <button class="btn" onclick="selectGame('initials')"><span class="btn-text">초성 퀴즈</span></button>
                 <button class="btn" onclick="selectGame('naran')"><span class="btn-text">순우리말퀴즈</span></button>
                 <button class="btn" onclick="selectGame('unanimity')"><span class="btn-text">일심동체 게임</span></button>
+                <button class="btn" onclick="selectGame('four-letter')"><span class="btn-text">네글자퀴즈</span></button>
             </div>
         </div>
     </div>
@@ -185,6 +186,26 @@
                 <h2>🏆 오늘의 기록</h2>
                 <ul id="unanimity-record-list" class="topic-record-list"></ul>
                 <button class="btn-back" style="font-size: 1.2rem;" onclick="clearRecords('unanimity')">기록 초기화</button>
+            </div>
+            <button class="btn-back" onclick="showScreen('main-menu')">게임 선택으로 돌아가기</button>
+        </div>
+    </div>
+
+    <!-- 2-6. 네글자퀴즈 - 설정 화면 -->
+    <div id="four-letter-menu" class="screen">
+        <div style="width: 100%; max-width: 1000px;">
+            <h1 class="title">🤔 시간을 설정하세요</h1>
+            <div class="time-setting">
+                <input type="number" id="four-letter-time-minutes" min="0" max="59" value="1"> 분
+                <input type="number" id="four-letter-time-seconds" min="0" max="59" value="0"> 초
+            </div>
+            <div class="btn-grid" style="grid-template-columns: 1fr;">
+                <button class="btn" onclick="startGame('four-letter', '네글자퀴즈')"><span class="btn-text">게임 시작!</span><span class="btn-emoji">🚀</span></button>
+            </div>
+            <div class="topic-record-board">
+                <h2>🏆 오늘의 기록</h2>
+                <ul id="four-letter-record-list" class="topic-record-list"></ul>
+                <button class="btn-back" style="font-size: 1.2rem;" onclick="clearRecords('four-letter')">기록 초기화</button>
             </div>
             <button class="btn-back" onclick="showScreen('main-menu')">게임 선택으로 돌아가기</button>
         </div>
@@ -405,17 +426,18 @@
             ]
         };
         initialsQuestions['과일'] = [
-            '사과', '배', '포도', '귤', '수박', '참외', '복숭아', '딸기', '자두', '매실',
-            '모과', '바나나', '파인애플', '멜론', '키위', '오렌지', '레몬', '자몽', '토마토', '블루베리',
-            '체리', '무화과', '석류', '한라봉', '레드향', '천혜향', '황금향', '유자', '감귤', '오디',
-            '복분자', '구아바', '파파야', '망고스틴', '리치', '람부탄', '코코넛', '아보카도', '두리안', '용과',
-            '패션후르츠', '대추', '잣', '호두', '땅콩', '아몬드', '은행', '다래', '으름', '산딸기',
-            '홍시', '단감', '방울토마토', '샤인머스캣', '청포도', '거봉', '라임', '잭프루트', '스타프루트', '깔라만시',
-            '구기자', '오미자', '산수유', '풋사과', '백도', '천도복숭아', '납작복숭아', '애플망고', '아사이베리', '크랜베리',
-            '라즈베리', '올리브', '피스타치오', '마카다미아', '캐슈넛', '피칸', '헤이즐넛', '비파', '포멜로', '스위티',
-            '청견', '카카오', '아세롤라', '노니', '보리수', '아로니아', '애플수박', '칸탈루프', '대저토마토', '구스베리',
-            '플럼코트', '카라카라', '아오리사과', '홍옥', '부사', '멀베리', '블러드오렌지', '탠저린', '골드키위', '하미과'
+            // 1단계
+            '사과', '배', '귤', '수박', '포도', '딸기', '참외', '복숭아', '자두', '토마토', '바나나', '오렌지', '파인애플', '키위', '망고', '멜론', '레몬', '체리', '단감', '살구',
+            // 2단계
+            '방울토마토', '홍시', '곶감', '거봉', '청포도', '샤인머스캣', '무화과', '자몽', '석류', '유자', '매실', '모과', '블루베리', '한라봉', '금귤', '대추', '밤', '산딸기', '오디', '복분자',
+            // 3단계
+            '아보카도', '코코넛', '파파야', '용과', '망고스틴', '패션후르츠', '두리안', '리치', '람부탄', '라임', '깔라만시', '구아바', '크랜베리', '라즈베리', '블랙베리', '골드키위', '애플망고', '천혜향', '레드향', '황금향',
+            // 4단계
+            '천도복숭아', '백도', '황도', '납작복숭아', '신비복숭아', '풋사과', '아오리사과', '홍옥', '부사', '애플수박', '흑수박', '대저토마토', '찰토마토', '스테비아토마토', '흑토마토', '가지포도', '블랙사파이어', '적포도', '건포도', '백향과',
+            // 5단계
+            '낑깡', '감귤', '청귤', '다래', '머루', '앵두', '연시', '반시', '대봉감', '오미자', '탱자', '하미과', '머스크멜론', '레드키위', '체리자두', '대추토마토', '씨없는수박', '꿀사과', '단마토', '푸룬'
         ];
+
         initialsQuestions['직업'] = [
             '경찰관', '소방관', '의사', '간호사', '교사', '선생님', '판사', '변호사', '미용사', '개발자',
             '디자이너', '프로그래머', '유튜버', '승무원', '조종사', '군인', '농부', '어부', '과학자', '배우',
@@ -480,18 +502,44 @@
             ]
         };
 
+        const fourLetterQuestions = {
+            '네글자퀴즈': [
+                { "question": "스마", "answer": "트폰", "fullWord": "스마트폰" }, { "question": "와이", "answer": "파이", "fullWord": "와이파이" }, { "question": "블루", "answer": "투스", "fullWord": "블루투스" }, { "question": "일석", "answer": "이조", "fullWord": "일석이조" }, { "question": "동문", "answer": "서답", "fullWord": "동문서답" }, { "question": "우왕", "answer": "좌왕", "fullWord": "우왕좌왕" }, { "question": "유비", "answer": "무환", "fullWord": "유비무환" }, { "question": "다다", "answer": "익선", "fullWord": "다다익선" }, { "question": "작심", "answer": "삼일", "fullWord": "작심삼일" }, { "question": "고진", "answer": "감래", "fullWord": "고진감래" }, { "question": "새옹", "answer": "지마", "fullWord": "새옹지마" }, { "question": "구사", "answer": "일생", "fullWord": "구사일생" }, { "question": "사면", "answer": "초가", "fullWord": "사면초가" }, { "question": "대기", "answer": "만성", "fullWord": "대기만성" }, { "question": "이심", "answer": "전심", "fullWord": "이심전심" }, { "question": "십중", "answer": "팔구", "fullWord": "십중팔구" }, { "question": "천고", "answer": "마비", "fullWord": "천고마비" }, { "question": "백발", "answer": "백중", "fullWord": "백발백중" }, { "question": "금상", "answer": "첨화", "fullWord": "금상첨화" }, { "question": "설상", "answer": "가상", "fullWord": "설상가상" }, { "question": "역지", "answer": "사지", "fullWord": "역지사지" }, { "question": "막상", "answer": "막하", "fullWord": "막상막하" }, { "question": "오합", "answer": "지졸", "fullWord": "오합지졸" }, { "question": "전화", "answer": "위복", "fullWord": "전화위복" }, { "question": "칠전", "answer": "팔기", "fullWord": "칠전팔기" }, { "question": "어부", "answer": "지리", "fullWord": "어부지리" }, { "question": "권선", "answer": "징악", "fullWord": "권선징악" }, { "question": "용두", "answer": "사미", "fullWord": "용두사미" }, { "question": "군계", "answer": "일학", "fullWord": "군계일학" }, { "question": "결자", "answer": "해지", "fullWord": "결자해지" },
+                { "question": "비밀", "answer": "번호", "fullWord": "비밀번호" }, { "question": "신용", "answer": "카드", "fullWord": "신용카드" }, { "question": "대중", "answer": "교통", "fullWord": "대중교통" },
+                { "question": "일기", "answer": "예보", "fullWord": "일기예보" }, { "question": "분리", "answer": "수거", "fullWord": "분리수거" }, { "question": "횡단", "answer": "보도", "fullWord": "횡단보도" },
+                { "question": "안전", "answer": "벨트", "fullWord": "안전벨트" }, { "question": "미세", "answer": "먼지", "fullWord": "미세먼지" }, { "question": "오토", "answer": "바이", "fullWord": "오토바이" },
+                { "question": "텔레", "answer": "비전", "fullWord": "텔레비전" }, { "question": "인공", "answer": "지능", "fullWord": "인공지능" }, { "question": "공중", "answer": "전화", "fullWord": "공중전화" },
+                { "question": "고슴", "answer": "도치", "fullWord": "고슴도치" }, { "question": "일방", "answer": "통행", "fullWord": "일방통행" }, { "question": "가상", "answer": "현실", "fullWord": "가상현실" },
+                { "question": "춘하", "answer": "추동", "fullWord": "춘하추동" }, { "question": "희로", "answer": "애락", "fullWord": "희로애락" }, { "question": "동서", "answer": "남북", "fullWord": "동서남북" },
+                { "question": "상하", "answer": "좌우", "fullWord": "상하좌우" }, { "question": "계란", "answer": "말이", "fullWord": "계란말이" }, { "question": "김치", "answer": "찌개", "fullWord": "김치찌개" },
+                { "question": "된장", "answer": "찌개", "fullWord": "된장찌개" }, { "question": "부대", "answer": "찌개", "fullWord": "부대찌개" }, { "question": "제육", "answer": "볶음", "fullWord": "제육볶음" },
+                { "question": "감자", "answer": "튀김", "fullWord": "감자튀김" }, { "question": "양념", "answer": "치킨", "fullWord": "양념치킨" }, { "question": "파인", "answer": "애플", "fullWord": "파인애플" },
+                { "question": "초코", "answer": "파이", "fullWord": "초코파이" }, { "question": "삼각", "answer": "김밥", "fullWord": "삼각김밥" }, { "question": "샌드", "answer": "위치", "fullWord": "샌드위치" },
+                { "question": "호두", "answer": "과자", "fullWord": "호두과자" }, { "question": "땅콩", "answer": "버터", "fullWord": "땅콩버터" }, { "question": "비빔", "answer": "국수", "fullWord": "비빔국수" }, { "question": "잔치", "answer": "국수", "fullWord": "잔치국수" }, { "question": "쟁반", "answer": "짜장", "fullWord": "쟁반짜장" }, { "question": "돼지", "answer": "고기", "fullWord": "돼지고기" }, { "question": "참치", "answer": "김밥", "fullWord": "참치김밥" }, { "question": "치즈", "answer": "케익", "fullWord": "치즈케익" }, { "question": "새우", "answer": "튀김", "fullWord": "새우튀김" }, { "question": "마파", "answer": "두부", "fullWord": "마파두부" }, { "question": "모짜", "answer": "렐라", "fullWord": "모짜렐라" }, { "question": "스파", "answer": "게티", "fullWord": "스파게티" }, { "question": "대한", "answer": "민국", "fullWord": "대한민국" }, { "question": "놀이", "answer": "공원", "fullWord": "놀이공원" }, { "question": "해바", "answer": "라기", "fullWord": "해바라기" }, { "question": "초등", "answer": "학교", "fullWord": "초등학교" }, { "question": "고등", "answer": "학교", "fullWord": "고등학교" }, { "question": "어린", "answer": "이집", "fullWord": "어린이집" }, { "question": "동물", "answer": "병원", "fullWord": "동물병원" }, { "question": "국민", "answer": "은행", "fullWord": "국민은행" }, { "question": "카카", "answer": "오톡", "fullWord": "카카오톡" }, { "question": "페이", "answer": "스북", "fullWord": "페이스북" }, { "question": "해리", "answer": "포터", "fullWord": "해리포터" }, { "question": "아이", "answer": "언맨", "fullWord": "아이언맨" }, { "question": "어벤", "answer": "져스", "fullWord": "어벤져스" }, { "question": "겨울", "answer": "왕국", "fullWord": "겨울왕국" }, { "question": "스타", "answer": "벅스", "fullWord": "스타벅스" }, { "question": "맥도", "answer": "날드", "fullWord": "맥도날드" }, { "question": "코카", "answer": "콜라", "fullWord": "코카콜라" }, { "question": "블랙", "answer": "핑크", "fullWord": "블랙핑크" }, { "question": "소녀", "answer": "시대", "fullWord": "소녀시대" }, { "question": "주민", "answer": "등록", "fullWord": "주민등록" }, { "question": "고객", "answer": "센터", "fullWord": "고객센터" }, { "question": "프라", "answer": "이팬", "fullWord": "프라이팬" }, { "question": "넷플", "answer": "릭스", "fullWord": "넷플릭스" }, { "question": "헬리", "answer": "콥터", "fullWord": "헬리콥터" }, { "question": "구급", "answer": "상자", "fullWord": "구급상자" }, { "question": "다이", "answer": "어리", "fullWord": "다이어리" }, { "question": "백설", "answer": "공주", "fullWord": "백설공주" }, { "question": "카멜", "answer": "레온", "fullWord": "카멜레온" },
+                { "question": "카페", "answer": "라떼", "fullWord": "카페라떼" }, { "question": "카푸", "answer": "치노", "fullWord": "카푸치노" }, { "question": "카스", "answer": "텔라", "fullWord": "카스텔라" }, { "question": "슈크", "answer": "림빵", "fullWord": "슈크림빵" }, { "question": "해물", "answer": "파전", "fullWord": "해물파전" }, { "question": "순대", "answer": "국밥", "fullWord": "순대국밥" }, { "question": "뼈해", "answer": "장국", "fullWord": "뼈해장국" }, { "question": "닭볶", "answer": "음탕", "fullWord": "닭볶음탕" }, { "question": "비빔", "answer": "냉면", "fullWord": "비빔냉면" }, { "question": "평양", "answer": "냉면", "fullWord": "평양냉면" }, { "question": "군고", "answer": "구마", "fullWord": "군고구마" }, { "question": "페퍼", "answer": "로니", "fullWord": "페퍼로니" }, { "question": "마시", "answer": "멜로", "fullWord": "마시멜로" }, { "question": "후라", "answer": "이드", "fullWord": "후라이드" }, { "question": "간장", "answer": "치킨", "fullWord": "간장치킨" }, { "question": "사과", "answer": "주스", "fullWord": "사과주스" }, { "question": "딸기", "answer": "우유", "fullWord": "딸기우유" }, { "question": "초코", "answer": "우유", "fullWord": "초코우유" }, { "question": "블루", "answer": "베리", "fullWord": "블루베리" }, { "question": "메추", "answer": "리알", "fullWord": "메추리알" },
+                { "question": "동그", "answer": "랑땡", "fullWord": "동그랑땡" }, { "question": "무지", "answer": "개떡", "fullWord": "무지개떡" }, { "question": "쿠크", "answer": "다스", "fullWord": "쿠크다스" }, { "question": "마가", "answer": "레트", "fullWord": "마가레트" }, { "question": "총각", "answer": "김치", "fullWord": "총각김치" }, { "question": "열무", "answer": "김치", "fullWord": "열무김치" }, { "question": "마요", "answer": "네즈", "fullWord": "마요네즈" }, { "question": "머스", "answer": "타드", "fullWord": "머스타드" }, { "question": "올리", "answer": "브유", "fullWord": "올리브유" }, { "question": "샤브", "answer": "샤브", "fullWord": "샤브샤브" }, { "question": "타코", "answer": "야끼", "fullWord": "타코야끼" }, { "question": "간장", "answer": "게장", "fullWord": "간장게장" }, { "question": "양념", "answer": "게장", "fullWord": "양념게장" }, { "question": "치즈", "answer": "김밥", "fullWord": "치즈김밥" }, { "question": "참치", "answer": "마요", "fullWord": "참치마요" }, { "question": "전기", "answer": "밥솥", "fullWord": "전기밥솥" }, { "question": "커피", "answer": "머신", "fullWord": "커피머신" }, { "question": "드라", "answer": "이기", "fullWord": "드라이기" }, { "question": "전기", "answer": "장판", "fullWord": "전기장판" }, { "question": "바디", "answer": "워시", "fullWord": "바디워시" },
+                { "question": "폼클", "answer": "렌징", "fullWord": "폼클렌징" }, { "question": "스킨", "answer": "로션", "fullWord": "스킨로션" }, { "question": "선글", "answer": "라스", "fullWord": "선글라스" }, { "question": "매니", "answer": "큐어", "fullWord": "매니큐어" }, { "question": "마스", "answer": "카라", "fullWord": "마스카라" }, { "question": "고무", "answer": "장갑", "fullWord": "고무장갑" }, { "question": "수면", "answer": "양말", "fullWord": "수면양말" }, { "question": "수면", "answer": "바지", "fullWord": "수면바지" }, { "question": "스니", "answer": "커즈", "fullWord": "스니커즈" }, { "question": "와이", "answer": "셔츠", "fullWord": "와이셔츠" }, { "question": "동전", "answer": "지갑", "fullWord": "동전지갑" }, { "question": "카드", "answer": "지갑", "fullWord": "카드지갑" }, { "question": "스케", "answer": "치북", "fullWord": "스케치북" }, { "question": "크레", "answer": "파스", "fullWord": "크레파스" }, { "question": "포스", "answer": "트잇", "fullWord": "포스트잇" }, { "question": "전자", "answer": "사전", "fullWord": "전자사전" }, { "question": "백과", "answer": "사전", "fullWord": "백과사전" }, { "question": "탁상", "answer": "시계", "fullWord": "탁상시계" }, { "question": "손목", "answer": "시계", "fullWord": "손목시계" }, { "question": "알람", "answer": "시계", "fullWord": "알람시계" },
+                { "question": "커피", "answer": "포트", "fullWord": "커피포트" }, { "question": "토스", "answer": "터기", "fullWord": "토스터기" }, { "question": "플라", "answer": "스틱", "fullWord": "플라스틱" }, { "question": "블랙", "answer": "박스", "fullWord": "블랙박스" }, { "question": "두루", "answer": "마리", "fullWord": "두루마리" }, { "question": "쓰레", "answer": "기통", "fullWord": "쓰레기통" }, { "question": "비닐", "answer": "봉지", "fullWord": "비닐봉지" }, { "question": "종합", "answer": "병원", "fullWord": "종합병원" }, { "question": "대학", "answer": "병원", "fullWord": "대학병원" }, { "question": "산부", "answer": "인과", "fullWord": "산부인과" }, { "question": "정형", "answer": "외과", "fullWord": "정형외과" }, { "question": "대형", "answer": "마트", "fullWord": "대형마트" }, { "question": "슈퍼", "answer": "마켓", "fullWord": "슈퍼마켓" }, { "question": "전통", "answer": "시장", "fullWord": "전통시장" }, { "question": "국립", "answer": "공원", "fullWord": "국립공원" }, { "question": "해수", "answer": "욕장", "fullWord": "해수욕장" }, { "question": "워터", "answer": "파크", "fullWord": "워터파크" }, { "question": "지하", "answer": "철역", "fullWord": "지하철역" }, { "question": "고속", "answer": "버스", "fullWord": "고속버스" }, { "question": "톨게", "answer": "이트", "fullWord": "톨게이트" },
+                { "question": "고속", "answer": "도로", "fullWord": "고속도로" }, { "question": "인천", "answer": "공항", "fullWord": "인천공항" }, { "question": "남산", "answer": "타워", "fullWord": "남산타워" }, { "question": "에버", "answer": "랜드", "fullWord": "에버랜드" }, { "question": "롯데", "answer": "월드", "fullWord": "롯데월드" }, { "question": "나무", "answer": "늘보", "fullWord": "나무늘보" }, { "question": "오랑", "answer": "우탄", "fullWord": "오랑우탄" }, { "question": "하이", "answer": "에나", "fullWord": "하이에나" }, { "question": "아나", "answer": "콘다", "fullWord": "아나콘다" }, { "question": "이구", "answer": "아나", "fullWord": "이구아나" }, { "question": "딱따", "answer": "구리", "fullWord": "딱따구리" }, { "question": "불가", "answer": "사리", "fullWord": "불가사리" }, { "question": "무당", "answer": "벌레", "fullWord": "무당벌레" }, { "question": "바퀴", "answer": "벌레", "fullWord": "바퀴벌레" }, { "question": "반딧", "answer": "불이", "fullWord": "반딧불이" }, { "question": "사막", "answer": "여우", "fullWord": "사막여우" }, { "question": "숨바", "answer": "꼭질", "fullWord": "숨바꼭질" }, { "question": "술래", "answer": "잡기", "fullWord": "술래잡기" }, { "question": "보드", "answer": "게임", "fullWord": "보드게임" }, { "question": "종이", "answer": "접기", "fullWord": "종이접기" }
+            ]
+        };
+
         const unanimityQuestions = {
             '일심동체': [
-                // 스포츠/인물
-                '야구', '축구', '농구', '배구', '탁구', '골프', '수영', '양궁', '태권도', '유도', '권투', '씨름', '스키', '스케이트', '서핑', '김연아', '손흥민', '박지성', '유재석', '강호동', '이효리', '비', '싸이', '아이유', '방탄소년단', '블랙핑크', '뉴진스', '아이브', '세종대왕', '이순신', '신사임당', '안중근', '유관순', '일론머스크', '스티브잡스', '빌게이츠', '오바마', '트럼프', '바이든', '푸틴',
-                // 종교
-                '목사님', '예수님', '하나님', '성령님', '기도', '찬양', '성경', '교회', '십자가', '아멘', '할렐루야', '믿음', '소망', '사랑', '천국', '지옥', '천사', '악마', '선악과', '노아의방주', '오병이어', '다윗', '골리앗', '모세', '십계명', '삼손', '요나', '베드로', '바울', '사도신경', '주기도문', '심방', '새벽기도', '수련회', '부흥회', '성가대', '주일학교', '큐티', '전도', '세례',
-                // 동물
-                '원숭이', '코끼리', '기린', '사자', '호랑이', '개구리', '강아지', '고양이', '토끼', '뱀', '거북이', '악어', '하마', '코뿔소', '캥거루', '타조', '펭귄', '독수리', '참새', '비둘기', '닭', '오리', '돼지', '소', '말', '양', '염소', '곰', '여우', '늑대', '사슴', '얼룩말', '낙타', '돌고래', '고래', '상어', '문어', '오징어', '게', '새우',
-                // 행동/감정
-                '하트', '애교', '사진찍기', '먹방', '유튜버', '의사', '경찰관', '소방관', '군인', '선생님', '아기', '할머니', '할아버지', '엄마', '아빠', '화남', '슬픔', '기쁨', '놀람', '행복', '사랑', '미용실', '샤워', '세수', '양치질', '운전', '요리', '청소', '빨래', '설거지', '공부', '시험', '컴퓨터', '스마트폰', '전화', '기타', '피아노', '드럼', '바이올린', '노래방',
-                // 장소/사물
-                '영화관', '놀이공원', '롤러코스터', '회전목마', '바이킹', '워터파크', '미끄럼틀', '눈싸움', '낚시', '등산', '캠핑', '바다', '산', '강', '하늘', '구름', '태양', '달', '별', '무지개'
+                // 1단계: 감정 & 제스처
+                '하트', '브이', '최고', '가위바위보', '약속', '기도', '만세', '화이팅', '비밀', '뽀뽀', '놀람', '눈물', '분노', '인사', '충성', '메롱', '사랑해', '추위', '더위', '기지개', '웃음', '하품', '기침', '재채기',
+                // 2단계: 스포츠 & 운동
+                '야구', '축구', '농구', '수영', '복싱', '양궁', '역도', '피겨스케이팅', '골프', '볼링', '태권도', '배구', '테니스', '달리기', '씨름', '줄다리기', '줄넘기', '스키', '당구', '홈런', '스케이트', '낚시', '등산', '다이빙',
+                // 3단계: 동물 & 자연
+                '원숭이', '코끼리', '고양이', '강아지', '토끼', '호랑이', '펭귄', '고릴라', '개구리', '뱀', '돼지', '곰', '공룡', '캥거루', '독수리', '타조', '물고기', '쥐', '나비', '꽃게', '기린', '하마', '악어', '거북이', '사슴', '오리', '모기', '파리', '문어',
+                // 4단계: 일상생활 & 직업
+                '세수', '양치질', '샤워', '라면', '수면', '운전', '셀카', '화장', '통화', '독서', '사진작가', '요리사', '의사', '지휘자', '경찰', '화가', '피아노', '기타', '시계', '오토바이', '청소', '설거지', '빨래', '다림질', '안마', '스트레칭', '향수', '안경', '이어폰', '컴퓨터', '엘리베이터', '우산', '건배', '쇼핑', '빗', '드라이기', '거울', '망치', '가위', '돋보기', '선풍기', '주사', '마스크', '선생님', '판사', '소방관', '도둑', '해적', '닌자', '농부', '승무원', '드럼', '바이올린', '트럼펫', '플루트', '리코더', '캠핑',
+                // 5단계: 인물 & 캐릭터
+                '슈퍼맨', '스파이더맨', '아이언맨', '헐크', '배트맨', '마이클잭슨', '우사인볼트', '손흥민', '자유의여신상', '생각하는사람', '피카츄', '짱구', '이소룡', '좀비', '드라큘라', '타이타닉', '007', '터미네이터', '모델', '보디빌더', '발레리나', '마술사', '엘사', '해리포터', '마리오', '알라딘', '인어공주', '백설공주', '손오공', '원더우먼', '루피', '나루토', '킹콩', '산타클로스', '처녀귀신', '강시', '미라', '투우사', '타잔', '피터팬', '텔레토비', '외계인',
+                // 6단계: 음식 & 먹방
+                '햄버거', '피자', '치킨', '짜장면', '수박', '아이스크림', '붕어빵', '솜사탕', '팝콘', '커피', '핫도그', '사과', '껌', '국수', '떡볶이', '삼겹살', '레몬', '초밥', '콜라', '스테이크',
+                // 7단계: 탈것
+                '로봇', '비행기', '헬리콥터', '기차'
             ]
         };
 
@@ -527,6 +575,7 @@
         const initialsRecordListEl = document.getElementById('initials-record-list');
         const unanimityRecordListEl = document.getElementById('unanimity-record-list');
         const naranRecordListEl = document.getElementById('naran-record-list');
+        const fourLetterRecordListEl = document.getElementById('four-letter-record-list');
 
         // --- 화면 전환 함수 ---
         function showScreen(screenId) {
@@ -542,6 +591,8 @@
                 loadRecords('naran');
             } else if (screenId === 'unanimity-menu') {
                 loadRecords('unanimity');
+            } else if (screenId === 'four-letter-menu') {
+                loadRecords('four-letter');
             }
             stopTimer(); // 화면 전환 시 항상 타이머 정지
         }
@@ -556,6 +607,8 @@
                 showScreen('naran-menu');
             } else if (gameType === 'unanimity') {
                 showScreen('unanimity-menu');
+            } else if (gameType === 'four-letter') {
+                showScreen('four-letter-menu');
             }
         }
 
@@ -595,19 +648,25 @@
                 seconds = parseInt(document.getElementById('config-time-seconds').value) || 0;
                 backScreenId = (gameType === 'charades') ? 'charades-topic-menu' : 'initials-topic-menu';
             } else { // 단일 주제 게임들
-                const minutesInputId = `${gameType}-time-minutes`;
+                const minutesInputId = `${gameType}-time-minutes`; // 예: naran-time-minutes
                 const secondsInputId = `${gameType}-time-seconds`;
                 minutes = parseInt(document.getElementById(minutesInputId).value) || 0;
                 seconds = parseInt(document.getElementById(secondsInputId).value) || 0;
                 backScreenId = `${gameType}-menu`;
             }
  
-            if (gameType === 'initials') {
+            // 타이머 표시 여부 설정
+            if (gameType === 'unanimity') {
+                timerEl.style.display = 'none'; // 일심동체 게임에서는 타이머 숨기기
+            } else {
+                timerEl.style.display = 'block';
+            }
+
+            if (gameType === 'initials' || gameType === 'four-letter') {
                 questionCard.classList.add('initials-card');
                 document.getElementById('correct-btn').innerText = '✅ 정답 확인';
             } else {
                 questionCard.classList.remove('initials-card');
-                document.getElementById('correct-btn').innerText = (gameType === 'naran') ? '✅ 뜻 확인' : '✅ 정답 / 다음';
             }
 
             if (gameType === 'naran') {
@@ -635,6 +694,8 @@
                 questionSet = naranQuestions;
             }  else if (gameType === 'unanimity') {
                 questionSet = unanimityQuestions;
+            } else if (gameType === 'four-letter') {
+                questionSet = fourLetterQuestions;
             } else {
                 questionSet = charadesQuestions;
             }
@@ -647,7 +708,10 @@
             // 4. 화면 표시 업데이트 및 타이머 시작
             updateScore();
             displayNextQuestion();
-            startTimer();
+            // 일심동체 게임이 아닐 경우에만 타이머 시작
+            if (gameType !== 'unanimity') {
+                startTimer();
+            }
 
             // 사회자에게 게임 시작 알림
             socket.emit('game-state-update', {
@@ -718,6 +782,9 @@
             } else if (currentGameType === 'naran') {
                 questionText = question.word;
                 answerText = question.meaning;
+            } else if (currentGameType === 'four-letter') {
+                questionText = question.question;
+                answerText = question.fullWord;
             } else { // 'charades', 'unanimity' 등
                 questionText = question;
                 answerText = question;
@@ -741,6 +808,8 @@
                 // 버튼 텍스트 설정
                 if (currentGameType === 'unanimity') {
                     document.getElementById('correct-btn').innerText = '✅ 성공 / 다음';
+                } else if (currentGameType === 'naran') {
+                    document.getElementById('correct-btn').innerText = '✅ 뜻 확인';
                 } else {
                     // startGame에서 이미 설정된 값을 유지하거나, 필요 시 다른 로직 추가
                 }
@@ -766,11 +835,16 @@
         }
 
         function handleCorrect() {
-            if (currentGameType === 'initials') {
+            if (currentGameType === 'initials' || currentGameType === 'four-letter') {
                 // 정답 확인 버튼을 처음 눌렀을 때
-                if (answerRevealEl.style.display === 'none') { 
-                    answerRevealEl.innerText = currentQuestions[currentQuestionIndex];
-                    answerRevealEl.style.display = 'block';
+                if (document.getElementById('correct-btn').innerText.includes('확인')) {
+                    if (currentGameType === 'four-letter') {
+                        const q = currentQuestions[currentQuestionIndex];
+                        questionCard.innerHTML = `${q.question} <span style="color: #e74c3c;">${q.answer}</span>`;
+                    } else { // 초성 퀴즈
+                        answerRevealEl.innerText = getQuestionInfo(currentQuestionIndex).answerText;
+                        answerRevealEl.style.display = 'block';
+                    }
                     document.getElementById('correct-btn').innerText = '👍 맞혔어요!';
                 } else { // '맞혔어요!' 버튼을 눌렀을 때
                     correctScore++;
@@ -805,7 +879,7 @@
             answerRevealEl.style.display = 'none';
             hintRevealEl.style.display = 'none';
             revealedHintCount = 0; // 다음 문제로 넘어갈 때 힌트 상태 초기화
-            if (currentGameType === 'initials') {
+            if (currentGameType === 'initials' || currentGameType === 'four-letter') {
                 document.getElementById('correct-btn').innerText = '✅ 정답 확인';
             } else if (currentGameType === 'naran') {
                 document.getElementById('correct-btn').innerText = '✅ 뜻 확인';
@@ -883,6 +957,7 @@
             else if (gameType === 'initials') targetListEl = initialsRecordListEl;
             else if (gameType === 'naran') targetListEl = naranRecordListEl;
             else if (gameType === 'unanimity') targetListEl = unanimityRecordListEl;
+            else if (gameType === 'four-letter') targetListEl = fourLetterRecordListEl;
             
             targetListEl.innerHTML = filteredRecords.length === 0 ? '<li>기록이 없습니다.</li>' : '';
             filteredRecords.slice().reverse().forEach(record => { // 최신 기록이 위로 오도록
@@ -891,6 +966,8 @@
                     gameName = '초성';
                 } else if (record.game === 'unanimity') {
                     gameName = '일심동체';
+                } else if (record.game === 'four-letter') {
+                    gameName = '네글자';
                 }
                 targetListEl.innerHTML += `<li><span>${record.team} (${gameName})</span> <span>성공 ${record.score} / 패스 ${record.pass || 0}</span></li>`;
             });
@@ -934,10 +1011,10 @@
 
         correctButton.addEventListener('mousedown', () => {
             // 초성퀴즈 또는 순우리말퀴즈 게임일 때만 동작
-            if (currentGameType === 'initials' || currentGameType === 'naran') {
+            if (currentGameType === 'initials' || currentGameType === 'naran' || currentGameType === 'four-letter') {
                 pressTimer = setTimeout(() => {
-                    const answer = (currentGameType === 'initials') 
-                        ? currentQuestions[currentQuestionIndex] 
+                    const answer = (currentGameType === 'initials' || currentGameType === 'four-letter') 
+                        ? getQuestionInfo(currentQuestionIndex).answerText
                         : currentQuestions[currentQuestionIndex].meaning;
                     answerRevealEl.innerText = `🤫 ${answer}`;
                     answerRevealEl.style.display = 'block';
