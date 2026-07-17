@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require("socket.io");
+
 const app = express();
 const server = http.createServer(app);
 
@@ -8,7 +9,6 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 // Express 미들웨어와 라우트를 설정합니다.
-
 // 특정 경로에 대한 라우트를 먼저 정의합니다.
 // 1. 플레이어용 로그인 페이지 라우트
 app.get('/', (req, res) => {
@@ -42,10 +42,10 @@ app.get('/host', (req, res) => {
     }
 });
 
-// 그 외의 요청은 public 폴더에서 정적 파일을 제공합니다. (예: logo.png)
+// 위에서 정의된 특정 경로 외의 모든 요청은 public 폴더에서 파일을 찾아 제공합니다.
+// (예: /logo.png 요청 시 public/logo.png 파일을 보냄)
 app.use(express.static('public'));
 
-// Socket.IO 연결 로직
 io.on('connection', (socket) => {
     console.log('✅ 클라이언트가 연결되었습니다.');
 
